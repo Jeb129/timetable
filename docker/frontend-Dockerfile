@@ -3,9 +3,10 @@ FROM node:20 AS build
 
 WORKDIR /app
 COPY ../frontend/package*.json ./
-RUN npm install
+RUN npm install 
 
 COPY ../frontend ./
+
 RUN npm run build
 
 # Используем Nginx для отдачи собранного фронтенда
