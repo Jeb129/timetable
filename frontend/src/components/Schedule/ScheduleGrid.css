@@ -25,6 +25,12 @@
   width: 100px;
 }
 
+.week-toggle {
+  margin-bottom: 1rem;
+  font-size: 1rem;
+  font-weight: bold;
+}
+
 .row .cell {
   width: 140px;
   height: 80px;

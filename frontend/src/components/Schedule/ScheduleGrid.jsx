@@ -1,4 +1,3 @@
-// src/components/Schedule/ScheduleGrid.jsx
 import React, { useState } from 'react';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import './ScheduleGrid.css';
@@ -6,90 +5,114 @@ import './ScheduleGrid.css';
 const times = ['08:30', '10:10', '11:50', '14:00', '15:40', '17:20'];
 const days = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
 
-const initialSchedule = days.reduce((acc, day) => {
-  acc[day] = times.map((time, i) => ({
-    id: `${day}-${i}`,
-    time,
-    lesson: '',
-  }));
-  return acc;
-}, {});
+const generateEmptySchedule = () =>
+  days.reduce((acc, day) => {
+    acc[day] = times.map((time, index) => ({
+      id: `${day}-${index}-${Math.random().toString(36).substr(2, 5)}`, // Уникальный ID
+      time,
+      lesson: '',
+    }));
+    return acc;
+  }, {});
 
-initialSchedule['Понедельник'][0].lesson = 'Математика';
-initialSchedule['Понедельник'][1].lesson = 'Физика';
-initialSchedule['Вторник'][2].lesson = 'История';
+// Инициализируем два расписания
+const initialEvenSchedule = generateEmptySchedule();
+initialEvenSchedule['Понедельник'][0].lesson = 'Математика';
+initialEvenSchedule['Понедельник'][1].lesson = 'Физика';
 
-function ScheduleGrid() {
-  const [schedule, setSchedule] = useState(initialSchedule);
+const initialOddSchedule = generateEmptySchedule();
+initialOddSchedule['Вторник'][2].lesson = 'История';
 
-  const onDragEnd = (result) => {
-    const { source, destination } = result;
-    if (!destination) return;
+function ScheduleGrid({ editable = false }) {
+  const [isEvenWeek, setIsEvenWeek] = useState(true);
+  const [evenSchedule, setEvenSchedule] = useState(initialEvenSchedule);
+  const [oddSchedule, setOddSchedule] = useState(initialOddSchedule);
 
-    const sourceDay = schedule[source.droppableId];
-    const destDay = schedule[destination.droppableId];
+  const schedule = isEvenWeek ? evenSchedule : oddSchedule;
+  const setSchedule = isEvenWeek ? setEvenSchedule : setOddSchedule;
 
-    const sourceItem = sourceDay[source.index];
-    const destItem = destDay[destination.index];
+  const handleWeekToggle = () => setIsEvenWeek(!isEvenWeek);
 
-    if (!sourceItem.lesson) return;
+ const onDragEnd = (result) => {
+  const { source, destination } = result;
+  if (!destination) return;
 
-    const updatedSchedule = { ...schedule };
+  // 👇 Добавлено: если не переместили — выходим
+  if (
+    source.droppableId === destination.droppableId &&
+    source.index === destination.index
+  ) {
+    return;
+  }
 
-    // Переместить пару
-    updatedSchedule[source.droppableId][source.index].lesson = '';
-    updatedSchedule[destination.droppableId][destination.index].lesson = sourceItem.lesson;
+  const sourceDay = source.droppableId;
+  const destDay = destination.droppableId;
 
-    setSchedule(updatedSchedule);
+  const sourceItems = Array.from(schedule[sourceDay]);
+  const destItems = Array.from(schedule[destDay]);
+
+  const draggedItem = { ...sourceItems[source.index] };
+
+  if (!draggedItem.lesson) return;
+
+  sourceItems[source.index].lesson = '';
+  destItems[destination.index].lesson = draggedItem.lesson;
+
+  const updatedSchedule = {
+    ...schedule,
+    [sourceDay]: sourceItems,
+    [destDay]: destItems,
   };
 
-  return (
+  setSchedule(updatedSchedule);
+};
+
+
+    return (
     <div className="grid-container">
-      <DragDropContext onDragEnd={onDragEnd}>
-        <div className="grid-header">
-          <div className="time-slot-header"></div>
-          {days.map((day) => (
-            <div key={day} className="day-column-header">{day}</div>
-          ))}
-        </div>
-        <div className="grid-body">
-          {times.map((time, timeIndex) => (
-            <div key={time} className="row">
-              <div className="time-slot">{time}</div>
-              {days.map((day) => (
-                <Droppable droppableId={day} key={`${day}-${time}`}>
-                  {(provided) => (
-                    <div
-                      ref={provided.innerRef}
-                      {...provided.droppableProps}
-                      className="cell"
-                    >
-                      {schedule[day][timeIndex].lesson && (
-                        <Draggable
-                          draggableId={`${day}-${timeIndex}`}
-                          index={timeIndex}
-                        >
-                          {(provided) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                              className="lesson-card"
-                            >
-                              {schedule[day][timeIndex].lesson}
-                            </div>
-                          )}
-                        </Draggable>
+      <div className="week-toggle">
+        <label>
+          <input
+            type="checkbox"
+            checked={isEvenWeek}
+            onChange={handleWeekToggle}
+          />
+          Чётная неделя
+        </label>
+      </div>
+
+      {editable ? (
+        <DragDropContext onDragEnd={onDragEnd}>
+          {/* drag-and-drop код */}
+        </DragDropContext>
+      ) : (
+        <div>
+          <div className="grid-header">
+            <div className="time-slot-header"></div>
+            {days.map((day) => (
+              <div key={day} className="day-column-header">{day}</div>
+            ))}
+          </div>
+
+          <div className="grid-body">
+            {times.map((time, timeIndex) => (
+              <div key={time} className="row">
+                <div className="time-slot">{time}</div>
+                {days.map((day) => {
+                  const slot = schedule[day][timeIndex];
+                  return (
+                    <div key={`${day}-${timeIndex}`} className="cell">
+                      {slot.lesson && (
+                        <div className="lesson-card">{slot.lesson}</div>
                       )}
-                      {provided.placeholder}
                     </div>
-                  )}
-                </Droppable>
-              ))}
-            </div>
-          ))}
+                  );
+                })}
+              </div>
+            ))}
+          </div>
         </div>
-      </DragDropContext>
+      )}
     </div>
   );
 }
