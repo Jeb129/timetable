@@ -164,6 +164,7 @@ class LessonRequirement(models.Model):
 class Lesson(models.Model):
     curriculum = models.ForeignKey(Curriculum, on_delete=models.CASCADE)
     room = models.ForeignKey(Room, on_delete=models.CASCADE)
+    groups = models.ManyToManyField(StudentSubGroup)
     # Фактическое распределение — через TimeSlot
 
     def __str__(self):
@@ -213,3 +214,12 @@ class TeacherRoomPreference(models.Model):
 
     class Meta:
         unique_together = ('teacher', 'discipline', 'lesson_type', 'room')
+
+class Constraint(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    weight = models.PositiveSmallIntegerField(default=5)
+    method_name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return f"{self.name} (weight={self.weight})"
+
