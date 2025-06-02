@@ -1,0 +1,46 @@
+/* src/components/Schedule/ScheduleGrid.css */
+
+.grid-container {
+  overflow-x: auto;
+  padding: 1rem;
+}
+
+.grid-header, .row {
+  display: flex;
+  align-items: center;
+}
+
+.grid-header {
+  font-weight: bold;
+  border-bottom: 2px solid #ccc;
+}
+
+.day-column-header, .time-slot {
+  width: 140px;
+  text-align: center;
+  padding: 0.5rem;
+}
+
+.time-slot-header {
+  width: 100px;
+}
+
+.row .cell {
+  width: 140px;
+  height: 80px;
+  border: 1px solid #ddd;
+  margin: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f9f9f9;
+}
+
+.lesson-card {
+  background-color: #cce5ff;
+  border-radius: 6px;
+  padding: 0.5rem;
+  text-align: center;
+  width: 100%;
+  cursor: grab;
+}
