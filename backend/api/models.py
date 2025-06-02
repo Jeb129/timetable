@@ -108,7 +108,7 @@ class Pair(models.Model):
 
 
 # 👥 Учебная подгруппа
-class StudentSubGroup(models.Model):
+class StudentGroup(models.Model):
     admission_year = models.PositiveIntegerField()
     direction = models.ForeignKey(EducationDirection, on_delete=models.CASCADE)
     form = models.ForeignKey(EducationForm, on_delete=models.CASCADE)
@@ -139,7 +139,7 @@ class ControlType(models.Model):
 
 # 📋 Учебный план
 class Curriculum(models.Model):
-    group = models.ForeignKey(StudentSubGroup, on_delete=models.CASCADE)
+    group = models.ForeignKey(StudentGroup, on_delete=models.CASCADE)
     discipline = models.ForeignKey(Discipline, on_delete=models.CASCADE)
     teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
     lesson_type = models.ForeignKey(LessonType, on_delete=models.CASCADE)
@@ -164,7 +164,7 @@ class LessonRequirement(models.Model):
 class Lesson(models.Model):
     curriculum = models.ForeignKey(Curriculum, on_delete=models.CASCADE)
     room = models.ForeignKey(Room, on_delete=models.CASCADE)
-    groups = models.ManyToManyField(StudentSubGroup)
+    groups = models.ManyToManyField(StudentGroup)
     # Фактическое распределение — через TimeSlot
 
     def __str__(self):
