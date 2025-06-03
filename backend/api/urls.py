@@ -16,6 +16,7 @@ urlpatterns = [
     path('update/<str:object_name>/<int:object_id>/',update_object), # Универсальное обновление объекта
     path('delete/<str:object_name>/<int:object_id>/',delete_object), # Универсальное удаление объекта
     path('group/<int:group_id>/pairs/', group_pairs), # расписание звонков в универе по группе
+    path('createScheduledLesson/<int:lesson_id>/<int:timeslot_id>/',create_ScheduledLesson), # Универсальное удаление объекта
     path('list/<str:model_name>/', list_objects, name='universal-list'), # Универсальный эндпоинт для получения списка объектов модели
 
 ]
