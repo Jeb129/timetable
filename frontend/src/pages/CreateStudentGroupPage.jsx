@@ -1,6 +1,6 @@
 // src/pages/CreateStudentGroupPage.jsx
 import React, { useState, useEffect } from 'react';
-// import { useNavigate } from 'react-router-dom';
+ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './Pages.css';
 
@@ -12,6 +12,12 @@ function CreateStudentGroupPage() {
     const [groupNumber, setGroupNumber] = useState('');
     const [subgroupNumber, setSubgroupNumber] = useState('1'); 
     const [studentCount, setStudentCount] = useState('');
+    const navigate = useNavigate(); // Инициализируем hook
+
+    const handleGoBack = () => {
+        navigate(-1); // Переход на предыдущую страницу в истории браузера
+        // или navigate('/edit'); // Переход на конкретную страницу редактирования
+    };
 
     // Состояния для хранения списков для ForeignKey (если будете делать <select>)
     // const [directions, setDirections] = useState([]);
@@ -103,7 +109,12 @@ function CreateStudentGroupPage() {
     return (
         <div className="admin-form-page-container">
             <div className="admin-form-wrapper">
+                <div className="admin-form-header">
                 <h2>Добавление новой учебной группы</h2>
+                <button onClick={handleGoBack} className="admin-form-back-button">
+                        ← Назад 
+                    </button>
+                    </div>
                 {error && <p className="error-message">{error}</p>}
                 {success && <p className="success-message">{success}</p>}
                 <form onSubmit={handleSubmit}>

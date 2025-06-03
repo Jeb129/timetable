@@ -125,17 +125,19 @@ export default function TimetableView() {
     }
   };
   
-  const isAuthenticated = sessionStorage.getItem('auth') === 'true';
+  //const isAuthenticated = sessionStorage.getItem('auth') === 'true';
 
   return (
     <div className="timetable-view-container">
       <div className="timetable-view-header">
         <h1 className="timetable-view-title">Просмотр расписания</h1>
-        {!isAuthenticated && (
-          <button onClick={() => navigate('/login')} className="timetable-view-login-button">
-            Войти
-          </button>
-        )}
+        {/* Убираем условие !isAuthenticated */}
+        <button
+          onClick={() => navigate('/login')}
+          className="timetable-view-login-button"
+        >
+          Войти
+        </button>
       </div>
 
       <div className="timetable-filter-section timetable-filter-section-inputs">

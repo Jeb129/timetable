@@ -17,6 +17,8 @@ export default function TimetableEditor() {
   const navigateToCreateStudentGroup = () => navigate('/admin/create-studentgroup');
   // Старая функция handleCreateUser, возможно, теперь не нужна, если создание Django User будет отдельно
   const handleOldCreateUser = () => navigate('/create-user'); // Если это еще актуально для Django User
+   const navigateToCreateBuilding = () => navigate('/admin/create-building');
+  const navigateToCreateRoom = () => navigate('/admin/create-room');
 
 
   useEffect(() => {
@@ -81,6 +83,12 @@ export default function TimetableEditor() {
             <button onClick={navigateToCreateStudentGroup} className="admin-action-button">
                 Добавить учебную группу
             </button>
+                <button onClick={navigateToCreateBuilding} className="admin-action-button">
+                  Добавить корпус
+              </button>
+              <button onClick={navigateToCreateRoom} className="admin-action-button">
+                  Добавить аудиторию
+              </button>
             {/* Добавьте другие кнопки по аналогии */}
         </div>
       </div>

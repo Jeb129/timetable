@@ -48,6 +48,20 @@ def create_object(request, model_name):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
+# @authentication_classes([JWTAuthentication]) # Добавьте по необходимости
+# @permission_classes([permissions.IsAuthenticated]) # Например, все залогиненные могут смотреть списки
+def list_objects(request, model_name):
+    model_info = MODEL_MAP.get(model_name.lower())
+    if not model_info:
+        return Response({"error": "Unknown model type"}, status=status.HTTP_400_BAD_REQUEST)
+
+    model_class, serializer_class = model_info
+    
+    queryset = model_class.objects.all()
+    serializer = serializer_class(queryset, many=True)
+    return Response(serializer.data)
+
+@api_view(['GET'])
 def get_object(request, object_name, object_id):
     object_info = MODEL_MAP.get(object_name)
     if not object_info:

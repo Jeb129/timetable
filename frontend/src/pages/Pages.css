@@ -657,3 +657,52 @@ html, body, #root { /* #root - это обычно div, куда рендери�
   max-width: 600px; 
   box-sizing: border-box;
 }
+.checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  max-height: 150px;
+  overflow-y: auto;
+}
+.checkbox-item {
+  display: flex;
+  align-items: center;
+}
+.checkbox-item input[type="checkbox"] {
+  margin-right: 8px;
+  width: auto; /* Чтобы не растягивался на 100% */
+}
+.checkbox-item label {
+  font-weight: normal; /* Переопределяем стиль label из .form-input-group */
+  margin-bottom: 0;
+}
+.admin-form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px; /* Такой же отступ, как у h2 раньше */
+}
+
+.admin-form-header h2 {
+  margin-bottom: 0; /* Убираем нижний отступ у заголовка, т.к. он теперь у .admin-form-header */
+}
+
+.admin-form-back-button {
+  padding: 8px 12px;
+  font-size: 14px;
+  color: #007bff; /* Синий, как ссылки */
+  background-color: transparent;
+  border: 1px solid #007bff;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  text-decoration: none; /* На случай, если это будет <Link> */
+}
+
+.admin-form-back-button:hover {
+  background-color: #007bff;
+  color: white;
+}
