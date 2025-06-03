@@ -34,6 +34,7 @@ MODEL_MAP = {
     'teacherroompreference': (TeacherRoomPreference, TeacherRoomPreferenceSerializer),
     'constraint': (Constraint, ConstraintSerializer),
 }
+
 @api_view(["POST"])
 def create_object(self, request, model_name):
     model_info = MODEL_MAP.get(model_name.lower())
@@ -97,3 +98,20 @@ def delete_object(request, object_name, object_id):
 
     obj.delete()
     return Response({'message': f'{object_name} deleted'}, status=status.HTTP_204_NO_CONTENT)
+
+@api_view(['GET'])
+def group_pairs(request, group_id):
+    try:
+        group = StudentGroup.objects.get(pk=group_id)
+    except StudentGroup.DoesNotExist:
+        return Response({'error': 'Group not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    # Получаем приоритетный корпус через цепочку
+    building = group.direction.institute.primary_building
+    if not building:
+        return Response({'error': 'No primary building found for institute'}, status=status.HTTP_404_NOT_FOUND)
+
+    # Все пары в этом корпусе
+    pairs = Pair.objects.filter(building=building).order_by('number')
+    serializer = PairSerializer(pairs, many=True)
+    return Response(serializer.data)
