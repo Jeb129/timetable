@@ -34,8 +34,9 @@ MODEL_MAP = {
     'teacherroompreference': (TeacherRoomPreference, TeacherRoomPreferenceSerializer),
     'constraint': (Constraint, ConstraintSerializer),
 }
-@api_view("POST")
-def create_object(request, model_name):
+
+@api_view(["POST"])
+def create_object(self, request, model_name):
     model_info = MODEL_MAP.get(model_name.lower())
     if not model_info:
         return Response({"error": "Unknown model"}, status=status.HTTP_400_BAD_REQUEST)
@@ -63,7 +64,8 @@ def get_object(request, object_name, object_id):
     serializer = serializer_class(obj)
     return Response(serializer.data)
 
-@api_view('PUT')
+@api_view(['PUT'])   # ✅ Правильно (список)
+@api_view(('POST',))
 def update_object(request, object_name, object_id):
     model_info = MODEL_MAP.get(object_name)
     if not model_info:
