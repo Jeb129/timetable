@@ -6,7 +6,12 @@ function CreateUserPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const navigate = useNavigate();
+  const navigate = useNavigate(); // Инициализируем hook
+
+    const handleGoBack = () => {
+        navigate(-1); // Переход на предыдущую страницу в истории браузера
+        // или navigate('/edit'); // Переход на конкретную страницу редактирования
+    };
 
   // Лучше получать токен непосредственно перед запросом или проверять его актуальность
   // Но для примера оставим так. Или можно вынести в useEffect для проверки при загрузке.
@@ -76,7 +81,12 @@ function CreateUserPage() {
   return (
     <div className="create-user-page-container">
       <div className="create-user-form-wrapper">
+        <div className="admin-form-header">
         <h2>Создание нового пользователя</h2>
+        <button onClick={handleGoBack} className="admin-form-back-button">
+                        ← Назад 
+                    </button>
+                    </div>
         <form onSubmit={handleSubmit}>
           <div className="form-input-group">
             <label htmlFor="username">Имя пользователя:</label>

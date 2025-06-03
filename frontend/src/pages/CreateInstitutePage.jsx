@@ -1,6 +1,6 @@
 // src/pages/CreateInstitutePage.jsx
 import React, { useState, useEffect } from 'react';
-// import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './Pages.css'; 
 
@@ -11,7 +11,12 @@ function CreateInstitutePage() {
     const [buildings, setBuildings] = useState([]); 
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
-    // const navigate = useNavigate();
+    const navigate = useNavigate(); // Инициализируем hook
+
+    const handleGoBack = () => {
+        navigate(-1); // Переход на предыдущую страницу в истории браузера
+        // или navigate('/edit'); // Переход на конкретную страницу редактирования
+    };
     
     const token = localStorage.getItem('accessToken'); // Получаем токен один раз
 
@@ -90,7 +95,12 @@ function CreateInstitutePage() {
     return (
         <div className="admin-form-page-container">
             <div className="admin-form-wrapper">
+                <div className="admin-form-header">
                 <h2>Создание нового института</h2>
+                <button onClick={handleGoBack} className="admin-form-back-button">
+                        ← Назад 
+                    </button>
+                    </div>
                 {error && <p className="error-message">{error}</p>}
                 {success && <p className="success-message">{success}</p>}
                 <form onSubmit={handleSubmit}>
