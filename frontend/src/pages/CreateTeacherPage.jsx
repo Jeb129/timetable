@@ -1,13 +1,14 @@
 // src/pages/CreateTeacherPage.jsx
-import React, { useState, useEffect } from 'react';// <--- ДОБАВЛЕНА ТОЧКА С ЗАПЯТОЙ
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react'; // Убедитесь, что useEffect не нужен здесь, если нет других сайд-эффектов
+// import { useNavigate } from 'react-router-dom'; // Раскомментируйте, если нужно перенаправление
+import axios from 'axios'; // Импортируем axios
 import './Pages.css'; // Убедитесь, что путь к Pages.css правильный
 
 function CreateTeacherPage() {
     const [fullName, setFullName] = useState('');
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
-    const navigate = useNavigate(); // Если нужно перенаправление после создания
+    // const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -20,34 +21,58 @@ function CreateTeacherPage() {
         }
 
         const teacherData = {
-            full_name: fullName.trim(),
+            full_name: fullName.trim(), // Поле должно точно совпадать с полем модели/сериализатора
         };
         
-        const token = localStorage.getItem('accessToken'); // Или ваш способ получения токена
+        const token = localStorage.getItem('accessToken'); 
+
+        if (!token) {
+            setError('Ошибка: токен аутентификации не найден. Пожалуйста, войдите в систему.');
+            // Можно добавить navigate('/login');
+            return;
+        }
 
         try {
-            const response = await fetch('/api/create/teacher/', { // Используем универсальный эндпоинт
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                },
-                body: JSON.stringify(teacherData),
-            });
+            const response = await axios.post(
+                'http://localhost:8000/api/create/teacher/', // Полный URL к вашему API
+                teacherData, // Данные для отправки
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                    },
+                }
+            );
 
-            const responseData = await response.json().catch(() => null);
-
-            if (!response.ok) {
-                const errorMessage = responseData?.detail || responseData?.error || Object.values(responseData || {}).flat().join('; ') || `Ошибка: ${response.status}`;
-                throw new Error(errorMessage);
-            }
-
-            setSuccess(`Преподаватель "${responseData.full_name}" успешно создан!`);
-            setFullName(''); // Очищаем поле
-            // navigate('/admin/teachers'); // Опциональное перенаправление
+            // axios по умолчанию выбрасывает ошибку для статусов 4xx/5xx, 
+            // поэтому мы попадем в catch, если !response.ok (в терминах fetch)
+            
+            setSuccess(`Преподаватель "${response.data.full_name}" успешно создан! (ID: ${response.data.id})`);
+            setFullName(''); 
         } catch (err) {
-            setError('Ошибка создания преподавателя: ' + err.message);
-            console.error("Create teacher error:", err);
+            let errorMessage = 'Ошибка создания преподавателя.';
+            if (err.response && err.response.data) {
+                // Пытаемся получить сообщение об ошибке от сервера
+                const serverError = err.response.data;
+                if (typeof serverError === 'string') {
+                    errorMessage = serverError;
+                } else if (serverError.error) {
+                    errorMessage = serverError.error;
+                } else if (serverError.detail) {
+                    errorMessage = serverError.detail;
+                } else {
+                    // Если это ошибки валидации DRF (словарь field: [errors])
+                    errorMessage = Object.entries(serverError)
+                        .map(([field, errors]) => `${field}: ${Array.isArray(errors) ? errors.join(', ') : errors}`)
+                        .join('; ');
+                }
+            } else if (err.request) {
+                errorMessage = 'Сервер не ответил. Проверьте подключение и доступность сервера.';
+            } else {
+                errorMessage = err.message;
+            }
+            setError(errorMessage);
+            console.error("Create teacher error:", err.response || err);
         }
     };
 

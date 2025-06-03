@@ -1,47 +1,39 @@
 // src/pages/CreateInstitutePage.jsx
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import './Pages.css'; // Общие стили
+// import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import './Pages.css'; 
 
 function CreateInstitutePage() {
     const [name, setName] = useState('');
     const [shortName, setShortName] = useState('');
     const [primaryBuildingId, setPrimaryBuildingId] = useState('');
-    const [buildings, setBuildings] = useState([]); // Для выпадающего списка корпусов
+    const [buildings, setBuildings] = useState([]); 
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
-    const navigate = useNavigate();
-
-    // Получение токена (предполагается, что у вас есть механизм для этого)
-    // const token = localStorage.getItem('accessToken'); // Или sessionStorage
+    // const navigate = useNavigate();
+    
+    const token = localStorage.getItem('accessToken'); // Получаем токен один раз
 
     useEffect(() => {
-        // Загрузка списка корпусов для выбора primary_building
         const fetchBuildings = async () => {
+            if (!token) return; // Не делаем запрос, если нет токена
+
             try {
-                // const response = await fetch('/api/buildings/', { // Замените на ваш реальный эндпоинт для корпусов
-                //     headers: {
-                //         'Authorization': `Bearer ${token}` 
-                //     }
-                // });
-                // if (!response.ok) throw new Error('Не удалось загрузить корпуса');
-                // const data = await response.json();
-                // setBuildings(data); 
-
-                // --- МОКОВЫЕ ДАННЫЕ для корпусов, пока нет API ---
-                setBuildings([
-                    { id: 1, code: 'К1' },
-                    { id: 2, code: 'К2 (лаб)' },
-                    { id: 3, code: 'УЛК' },
-                ]);
-                // --- КОНЕЦ МОКОВЫХ ДАННЫХ ---
-
+                // Предполагаем, что у вас есть эндпоинт /api/buildings/ для получения списка зданий
+                const response = await axios.get('http://localhost:8000/api/buildings/', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                setBuildings(response.data || []); // DRF обычно возвращает массив в data
             } catch (err) {
-                setError('Ошибка загрузки списка корпусов: ' + err.message);
+                console.error('Ошибка загрузки списка корпусов:', err.response?.data || err);
+                setError('Не удалось загрузить список корпусов. Попробуйте обновить страницу.');
+                // Для простоты можно оставить моковые данные, если API еще нет
+                // setBuildings([ { id: 1, code: 'К1' }, { id: 2, code: 'К2' }]);
             }
         };
         fetchBuildings();
-    }, []); // Зависимость от token, если он используется
+    }, [token]); // Перезагружаем, если токен изменился (хотя обычно он не меняется без перезагрузки страницы)
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -54,46 +46,49 @@ function CreateInstitutePage() {
         }
         
         const instituteData = {
-            name,
-            short_name: shortName,
+            name: name.trim(),
+            short_name: shortName.trim(),
+            // Если primaryBuildingId не пустой, преобразуем в число, иначе null
+            primary_building: primaryBuildingId ? parseInt(primaryBuildingId, 10) : null,
         };
-        if (primaryBuildingId) { // Отправляем ID, если выбран
-            instituteData.primary_building = parseInt(primaryBuildingId, 10);
-        } else {
-            instituteData.primary_building = null; // Явно отправляем null, если не выбран
-        }
         
-        const token = localStorage.getItem('accessToken'); // Получаем токен перед запросом
+        if (!token) {
+            setError('Ошибка: токен аутентификации не найден.');
+            return;
+        }
 
         try {
-            const response = await fetch('/api/institutes/', { // Убедитесь, что префикс /api/ соответствует core/urls.py
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`, // Если ваш API требует Bearer токен
-                },
-                body: JSON.stringify(instituteData),
-            });
-
-            const responseData = await response.json().catch(() => null);
-
-            if (!response.ok) {
-                const errorMessage = responseData?.detail || responseData?.error || Object.values(responseData || {}).flat().join('; ') || `Ошибка: ${response.status}`;
-                throw new Error(errorMessage);
-            }
-
-            setSuccess(`Институт "${responseData.name}" успешно создан!`);
+            const response = await axios.post(
+                'http://localhost:8000/api/create/institute/',
+                instituteData,
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                    },
+                }
+            );
+            
+            setSuccess(`Институт "${response.data.name}" успешно создан! (ID: ${response.data.id})`);
             setName('');
             setShortName('');
             setPrimaryBuildingId('');
-            // Можно добавить navigate('/admin/institutes-list') или что-то подобное
         } catch (err) {
-            setError('Ошибка создания института: ' + err.message);
+            let errorMessage = 'Ошибка создания института.';
+            if (err.response && err.response.data) {
+                const serverError = err.response.data;
+                if (serverError.error) errorMessage = serverError.error;
+                else if (serverError.detail) errorMessage = serverError.detail;
+                else errorMessage = Object.entries(serverError).map(([field, errors]) => `${field}: ${Array.isArray(errors) ? errors.join(', ') : errors}`).join('; ');
+            } else if (err.request) errorMessage = 'Сервер не ответил.';
+            else errorMessage = err.message;
+            setError(errorMessage);
+            console.error("Create institute error:", err.response || err);
         }
     };
 
     return (
-        <div className="admin-form-page-container"> {/* Используем общий стиль для админ-страниц */}
+        <div className="admin-form-page-container">
             <div className="admin-form-wrapper">
                 <h2>Создание нового института</h2>
                 {error && <p className="error-message">{error}</p>}
@@ -101,39 +96,40 @@ function CreateInstitutePage() {
                 <form onSubmit={handleSubmit}>
                     <div className="form-input-group">
                         <label htmlFor="institute-name">Полное название:</label>
-                        <input
-                            id="institute-name"
-                            type="text"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            required
-                        />
+                        <input id="institute-name" type="text" value={name} onChange={(e) => setName(e.target.value)} required />
                     </div>
                     <div className="form-input-group">
-                        <label htmlFor="institute-short-name">Краткое название (аббревиатура):</label>
-                        <input
-                            id="institute-short-name"
-                            type="text"
-                            value={shortName}
-                            onChange={(e) => setShortName(e.target.value)}
-                            required
-                        />
+                        <label htmlFor="institute-short-name">Краткое название:</label>
+                        <input id="institute-short-name" type="text" value={shortName} onChange={(e) => setShortName(e.target.value)} required />
                     </div>
                     <div className="form-input-group">
-                        <label htmlFor="institute-primary-building">Основной корпус (необязательно):</label>
+                        <label htmlFor="institute-primary-building">Основной корпус (ID):</label>
                         <select
                             id="institute-primary-building"
                             value={primaryBuildingId}
                             onChange={(e) => setPrimaryBuildingId(e.target.value)}
-                            className="admin-form-select" // Добавьте стили для селекта
+                            className="admin-form-select"
                         >
                             <option value="">-- Не выбран --</option>
-                            {buildings.map(building => (
-                                <option key={building.id} value={building.id}>
-                                    {building.code}
-                                </option>
-                            ))}
+                            {buildings.length > 0 ? (
+                                buildings.map(building => (
+                                    <option key={building.id} value={building.id}>
+                                        {building.code} (ID: {building.id})
+                                    </option>
+                                ))
+                            ) : (
+                                <option value="" disabled>Загрузка корпусов...</option>
+                            )}
                         </select>
+                        {/* Или, если пока нет API для корпусов, просто текстовое поле для ID:
+                        <input 
+                            id="institute-primary-building" 
+                            type="number" 
+                            placeholder="Введите ID корпуса (необязательно)" 
+                            value={primaryBuildingId} 
+                            onChange={(e) => setPrimaryBuildingId(e.target.value)} 
+                        />
+                        */}
                     </div>
                     <button type="submit" className="admin-form-submit-button">Создать институт</button>
                 </form>

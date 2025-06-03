@@ -1,28 +1,49 @@
 // src/pages/CreateStudentGroupPage.jsx
-import React, { useState } from 'react';
-// import { useNavigate } from 'react-router-dom'; // Если нужно
+import React, { useState, useEffect } from 'react';
+// import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import './Pages.css';
 
 function CreateStudentGroupPage() {
     const [admissionYear, setAdmissionYear] = useState(new Date().getFullYear());
-    const [directionId, setDirectionId] = useState(''); // Будем вводить ID
-    const [formId, setFormId] = useState('');         // Будем вводить ID
-    const [levelId, setLevelId] = useState('');       // Будем вводить ID
+    const [directionId, setDirectionId] = useState(''); 
+    const [formId, setFormId] = useState('');         
+    const [levelId, setLevelId] = useState('');       
     const [groupNumber, setGroupNumber] = useState('');
-    const [subgroupNumber, setSubgroupNumber] = useState('1'); // Часто по умолчанию 1
+    const [subgroupNumber, setSubgroupNumber] = useState('1'); 
     const [studentCount, setStudentCount] = useState('');
+
+    // Состояния для хранения списков для ForeignKey (если будете делать <select>)
+    // const [directions, setDirections] = useState([]);
+    // const [forms, setForms] = useState([]);
+    // const [levels, setLevels] = useState([]);
 
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     // const navigate = useNavigate();
+    
+    const token = localStorage.getItem('accessToken');
 
-    // TODO: В идеале, загрузить списки Direction, Form, Level для <select>
+    // useEffect для загрузки списков для ForeignKey (направлений, форм, уровней)
     // useEffect(() => {
-    //   // fetchDirections().then(setDirections);
-    //   // fetchForms().then(setForms);
-    //   // fetchLevels().then(setLevels);
-    // }, []);
-
+    //     if (!token) return;
+    //     const fetchData = async () => {
+    //         try {
+    //             const [dirsRes, formsRes, levelsRes] = await Promise.all([
+    //                 axios.get('http://localhost:8000/api/educationdirections/', { headers: { 'Authorization': `Bearer ${token}` } }),
+    //                 axios.get('http://localhost:8000/api/educationforms/', { headers: { 'Authorization': `Bearer ${token}` } }),
+    //                 axios.get('http://localhost:8000/api/educationlevels/', { headers: { 'Authorization': `Bearer ${token}` } })
+    //             ]);
+    //             setDirections(dirsRes.data || []);
+    //             setForms(formsRes.data || []);
+    //             setLevels(levelsRes.data || []);
+    //         } catch (err) {
+    //             console.error('Ошибка загрузки справочников для группы:', err.response?.data || err);
+    //             setError('Не удалось загрузить справочники. Попробуйте обновить страницу.');
+    //         }
+    //     };
+    //     fetchData();
+    // }, [token]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -36,47 +57,46 @@ function CreateStudentGroupPage() {
 
         const groupData = {
             admission_year: parseInt(admissionYear, 10),
-            direction: parseInt(directionId, 10), // Отправляем ID
-            form: parseInt(formId, 10),           // Отправляем ID
-            level: parseInt(levelId, 10),         // Отправляем ID
+            direction: parseInt(directionId, 10), 
+            form: parseInt(formId, 10),           
+            level: parseInt(levelId, 10),         
             group_number: parseInt(groupNumber, 10),
             subgroup_number: parseInt(subgroupNumber, 10),
             student_count: parseInt(studentCount, 10),
         };
         
-        const token = localStorage.getItem('accessToken');
+        if (!token) {
+            setError('Ошибка: токен аутентификации не найден.');
+            return;
+        }
 
         try {
-            const response = await fetch('/api/create/studentgroup/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                },
-                body: JSON.stringify(groupData),
-            });
-
-            const responseData = await response.json().catch(() => null);
-
-            if (!response.ok) {
-                const errorMessage = responseData?.detail || responseData?.error || Object.values(responseData || {}).flat().join('; ') || `Ошибка: ${response.status}`;
-                throw new Error(errorMessage);
-            }
+            const response = await axios.post(
+                'http://localhost:8000/api/create/studentgroup/',
+                groupData,
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                    },
+                }
+            );
             
-            // В ответе от UniversalCreateView будет сериализованный объект группы
-            setSuccess(`Учебная группа успешно создана! (ID: ${responseData.id})`);
-            // Очистка полей
+            setSuccess(`Учебная группа успешно создана! (ID: ${response.data.id})`);
             setAdmissionYear(new Date().getFullYear());
-            setDirectionId('');
-            setFormId('');
-            setLevelId('');
-            setGroupNumber('');
-            setSubgroupNumber('1');
-            setStudentCount('');
-
+            setDirectionId(''); setFormId(''); setLevelId('');
+            setGroupNumber(''); setSubgroupNumber('1'); setStudentCount('');
         } catch (err) {
-            setError('Ошибка создания учебной группы: ' + err.message);
-            console.error("Create student group error:", err);
+            let errorMessage = 'Ошибка создания учебной группы.';
+            if (err.response && err.response.data) {
+                const serverError = err.response.data;
+                if (serverError.error) errorMessage = serverError.error;
+                else if (serverError.detail) errorMessage = serverError.detail;
+                else errorMessage = Object.entries(serverError).map(([field, errors]) => `${field}: ${Array.isArray(errors) ? errors.join(', ') : errors}`).join('; ');
+            } else if (err.request) errorMessage = 'Сервер не ответил.';
+            else errorMessage = err.message;
+            setError(errorMessage);
+            console.error("Create student group error:", err.response || err);
         }
     };
 
@@ -91,21 +111,24 @@ function CreateStudentGroupPage() {
                         <label htmlFor="sg-admission-year">Год поступления:</label>
                         <input id="sg-admission-year" type="number" value={admissionYear} onChange={(e) => setAdmissionYear(e.target.value)} required />
                     </div>
+                    {/* Поля для ForeignKey (пока текстовый ввод ID, потом можно заменить на select) */}
                     <div className="form-input-group">
                         <label htmlFor="sg-direction-id">ID Направления подготовки:</label>
-                        <input id="sg-direction-id" type="number" placeholder="Введите ID из справочника" value={directionId} onChange={(e) => setDirectionId(e.target.value)} required />
-                        {/* TODO: Заменить на <select> с загрузкой данных */}
+                        <input id="sg-direction-id" type="number" placeholder="Введите ID" value={directionId} onChange={(e) => setDirectionId(e.target.value)} required />
+                        {/* <select value={directionId} onChange={(e) => setDirectionId(e.target.value)} required className="admin-form-select">
+                            <option value="">-- Выберите направление --</option>
+                            {directions.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                        </select> */}
                     </div>
                     <div className="form-input-group">
                         <label htmlFor="sg-form-id">ID Формы обучения:</label>
-                        <input id="sg-form-id" type="number" placeholder="Введите ID из справочника" value={formId} onChange={(e) => setFormId(e.target.value)} required />
-                        {/* TODO: Заменить на <select> с загрузкой данных */}
+                        <input id="sg-form-id" type="number" placeholder="Введите ID" value={formId} onChange={(e) => setFormId(e.target.value)} required />
                     </div>
                     <div className="form-input-group">
                         <label htmlFor="sg-level-id">ID Уровня подготовки:</label>
-                        <input id="sg-level-id" type="number" placeholder="Введите ID из справочника" value={levelId} onChange={(e) => setLevelId(e.target.value)} required />
-                        {/* TODO: Заменить на <select> с загрузкой данных */}
+                        <input id="sg-level-id" type="number" placeholder="Введите ID" value={levelId} onChange={(e) => setLevelId(e.target.value)} required />
                     </div>
+                    {/* Остальные поля */}
                     <div className="form-input-group">
                         <label htmlFor="sg-group-number">Номер группы:</label>
                         <input id="sg-group-number" type="number" value={groupNumber} onChange={(e) => setGroupNumber(e.target.value)} required />
