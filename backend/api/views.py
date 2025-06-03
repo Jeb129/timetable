@@ -1,11 +1,16 @@
-from django.shortcuts import render
 from django.http import JsonResponse
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
+import logging
 from .constraint_engine import ConstraintEngine
 from .models import *
 from .serializers import *
+
+logger = logging.getLogger(__name__)
 
 def hello_world(request):
     return JsonResponse({"message": "Hello from Django API!"})
@@ -46,6 +51,61 @@ def create_object(request, model_name):
         instance = serializer.save()
         return Response(serializer_class(instance).data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAuthenticated]) # Решите, какие права нужны
+def get_schedule_for_group(request, group_id):
+    week_is_even_str = request.query_params.get('week_is_even', None)
+    if week_is_even_str is None:
+        return Response({"error": "Параметр 'week_is_even' (true/false) обязателен"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    is_even = week_is_even_str.lower() == 'true'
+
+    try:
+        # Находим все TimeSlot для указанной недели
+        time_slots_for_week = TimeSlot.objects.filter(is_even_week=is_even)
+        
+        scheduled_lessons = ScheduledLesson.objects.filter(
+            lesson__groups__id=group_id, 
+            time_slot__in=time_slots_for_week 
+        ).select_related( 
+            'lesson__curriculum__discipline', 
+            'lesson__curriculum__teacher',
+            'lesson__curriculum__lesson_type', # Добавлено для lesson_type_name
+            'lesson__room__building', # Добавлено для building_code в RoomShortSerializer
+            'time_slot__weekday',
+            'time_slot__pair__building' # Если PairSerializer или TimeSlotForScheduledSerializer этого требуют
+        ).prefetch_related(
+            'lesson__groups' # Если нужно что-то из групп в LessonForScheduledSerializer
+        ) 
+        # select_related и prefetch_related здесь для оптимизации, 
+        # чтобы уменьшить количество запросов к БД при сериализации вложенных объектов.
+        # Их нужно настроить в соответствии с тем, какие поля вы реально используете
+        # в DetailedScheduledLessonSerializer и его вложенных сериализаторах.
+        
+        serializer = DetailedScheduledLessonSerializer(scheduled_lessons, many=True)
+        return Response(serializer.data)
+    # Убрал StudentGroup.DoesNotExist, так как мы не делаем get по group_id для StudentGroup напрямую здесь,
+    # а фильтруем ScheduledLesson. Если группа не существует, scheduled_lessons будет пустым.
+    except Exception as e:
+        # Используем настроенный логгер
+        logger.error(f"Error in get_schedule_for_group for group {group_id}, week_is_even={is_even}: {e}", exc_info=True) 
+        return Response({"error": "Внутренняя ошибка сервера при получении расписания"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+# @authentication_classes([JWTAuthentication]) # Добавьте по необходимости
+# @permission_classes([permissions.IsAuthenticated]) # Например, все залогиненные могут смотреть списки
+def list_objects(request, model_name):
+    model_info = MODEL_MAP.get(model_name.lower())
+    if not model_info:
+        return Response({"error": "Unknown model type"}, status=status.HTTP_400_BAD_REQUEST)
+
+    model_class, serializer_class = model_info
+    
+    queryset = model_class.objects.all()
+    serializer = serializer_class(queryset, many=True)
+    return Response(serializer.data)
 
 @api_view(['GET'])
 def get_object(request, object_name, object_id):

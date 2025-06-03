@@ -1,6 +1,6 @@
 // src/pages/CreateTeacherPage.jsx
 import React, { useState } from 'react'; // Убедитесь, что useEffect не нужен здесь, если нет других сайд-эффектов
-// import { useNavigate } from 'react-router-dom'; // Раскомментируйте, если нужно перенаправление
+import { useNavigate } from 'react-router-dom'; // Раскомментируйте, если нужно перенаправление
 import axios from 'axios'; // Импортируем axios
 import './Pages.css'; // Убедитесь, что путь к Pages.css правильный
 
@@ -8,7 +8,12 @@ function CreateTeacherPage() {
     const [fullName, setFullName] = useState('');
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
-    // const navigate = useNavigate();
+    const navigate = useNavigate(); // Инициализируем hook
+
+    const handleGoBack = () => {
+        navigate(-1); // Переход на предыдущую страницу в истории браузера
+        // или navigate('/edit'); // Переход на конкретную страницу редактирования
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -79,7 +84,12 @@ function CreateTeacherPage() {
     return (
         <div className="admin-form-page-container">
             <div className="admin-form-wrapper">
+                <div className="admin-form-header">
                 <h2>Добавление нового преподавателя</h2>
+                <button onClick={handleGoBack} className="admin-form-back-button">
+                        ← Назад 
+                    </button>
+                    </div>
                 {error && <p className="error-message">{error}</p>}
                 {success && <p className="success-message">{success}</p>}
                 <form onSubmit={handleSubmit}>
