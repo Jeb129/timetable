@@ -1,7 +1,13 @@
 from django.db import models
+from django.contrib.auth.models import AbstractUser
 
+class CustomUser(AbstractUser):
+    isAdmin = models.BooleanField(default=False)
+    def __str__(self):
+        return self.username
+    
 
-# 📅 Дни недели
+# Дни недели
 class Weekday(models.Model):
     number = models.PositiveSmallIntegerField(unique=True)  # 1=Пн, 2=Вт...
     name = models.CharField(max_length=20)
@@ -11,7 +17,7 @@ class Weekday(models.Model):
         return self.name
 
 
-# 🎓 Виды занятий
+# Виды занятий
 class LessonType(models.Model):
     name = models.CharField(max_length=50)
 
@@ -19,7 +25,7 @@ class LessonType(models.Model):
         return self.name
 
 
-# 🏢 Корпуса
+# Корпуса
 class Building(models.Model):
     code = models.CharField(max_length=5, unique=True)
 
@@ -27,7 +33,7 @@ class Building(models.Model):
         return self.code
 
 
-# 🛠 Оборудование
+# Оборудование
 class Equipment(models.Model):
     name = models.CharField(max_length=100)
 
@@ -35,7 +41,7 @@ class Equipment(models.Model):
         return self.name
 
 
-# 🏫 Аудитории
+# Аудитории
 class Room(models.Model):
     building = models.ForeignKey(Building, on_delete=models.CASCADE)
     number = models.CharField(max_length=10)
@@ -46,7 +52,7 @@ class Room(models.Model):
         return f"{self.building.code}-{self.number}"
 
 
-# 🏛 Институты
+# Институты
 class Institute(models.Model):
     name = models.CharField(max_length=100)
     short_name = models.CharField(max_length=20)
@@ -56,7 +62,7 @@ class Institute(models.Model):
         return self.short_name
 
 
-# 🎓 Направления подготовки
+# Направления подготовки
 class EducationDirection(models.Model):
     code = models.CharField(max_length=20)
     name = models.CharField(max_length=100)
@@ -67,7 +73,7 @@ class EducationDirection(models.Model):
         return f"{self.code} - {self.short_name}"
 
 
-# 🧾 Формы обучения
+# Формы обучения
 class EducationForm(models.Model):
     name = models.CharField(max_length=50)
     short_code = models.CharField(max_length=10)
@@ -76,7 +82,7 @@ class EducationForm(models.Model):
         return self.name
 
 
-# 🎓 Уровни подготовки
+# Уровни подготовки
 class EducationLevel(models.Model):
     name = models.CharField(max_length=50)
     short_code = models.CharField(max_length=10)
@@ -85,7 +91,7 @@ class EducationLevel(models.Model):
         return self.name
 
 
-# 📚 Дисциплины
+# Дисциплины
 class Discipline(models.Model):
     name = models.CharField(max_length=100)
 
@@ -93,7 +99,7 @@ class Discipline(models.Model):
         return self.name
 
 
-# 🕑 Пара — расписание звонков
+# Пара — расписание звонков
 class Pair(models.Model):
     number = models.PositiveSmallIntegerField()
     building = models.ForeignKey(Building, on_delete=models.CASCADE)
@@ -107,7 +113,7 @@ class Pair(models.Model):
         return f"{self.building.code} - Пара {self.number}"
 
 
-# 👥 Учебная подгруппа
+# Учебная подгруппа
 class StudentGroup(models.Model):
     admission_year = models.PositiveIntegerField()
     direction = models.ForeignKey(EducationDirection, on_delete=models.CASCADE)
@@ -121,7 +127,7 @@ class StudentGroup(models.Model):
         return f"{str(self.admission_year)[-2:]}-{self.direction.short_name}-{self.group_number}.{self.subgroup_number}"
 
 
-# 👨‍🏫 Преподаватели
+# Преподаватели
 class Teacher(models.Model):
     full_name = models.CharField(max_length=100)
 
@@ -129,7 +135,7 @@ class Teacher(models.Model):
         return self.full_name
 
 
-# 📘 Тип контроля
+# Тип контроля
 class ControlType(models.Model):
     name = models.CharField(max_length=50)
 
@@ -137,7 +143,7 @@ class ControlType(models.Model):
         return self.name
 
 
-# 📋 Учебный план
+# Учебный план
 class Curriculum(models.Model):
     group = models.ForeignKey(StudentGroup, on_delete=models.CASCADE)
     discipline = models.ForeignKey(Discipline, on_delete=models.CASCADE)
@@ -150,7 +156,7 @@ class Curriculum(models.Model):
         return f"{self.group} - {self.discipline}"
 
 
-# 🧾 Требования к аудитории
+# Требования к аудитории
 class LessonRequirement(models.Model):
     discipline = models.ForeignKey(Discipline, on_delete=models.CASCADE)
     lesson_type = models.ForeignKey(LessonType, on_delete=models.CASCADE)
@@ -160,18 +166,19 @@ class LessonRequirement(models.Model):
         return f"{self.discipline} ({self.lesson_type})"
 
 
-# 📍 Планируемое занятие
+# Планируемое занятие
 class Lesson(models.Model):
-    curriculum = models.ForeignKey(Curriculum, on_delete=models.CASCADE)
+    discipline = models.ForeignKey(Discipline, on_delete=models.CASCADE)
+    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
+    lesson_type = models.ForeignKey(LessonType, on_delete=models.CASCADE)
     room = models.ForeignKey(Room, on_delete=models.CASCADE)
     groups = models.ManyToManyField(StudentGroup)
-    # Фактическое распределение — через TimeSlot
 
     def __str__(self):
-        return f"{self.curriculum} в {self.room}"
+        return f"({self.lesson_type}){self.discipline} в {self.room}"
 
 
-# 🕓 Временной слот
+# Временной слот
 class TimeSlot(models.Model):
     weekday = models.ForeignKey(Weekday, on_delete=models.CASCADE)
     is_even_week = models.BooleanField()
@@ -184,7 +191,7 @@ class TimeSlot(models.Model):
         return f"{self.weekday.short_name} {'Чет' if self.is_even_week else 'Неч'} - {self.pair}"
 
 
-# 📅 Фактическое размещение занятия в расписании
+# Фактическое размещение занятия в расписании
 class ScheduledLesson(models.Model):
     lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE)
     time_slot = models.ForeignKey(TimeSlot, on_delete=models.CASCADE)
@@ -196,7 +203,7 @@ class ScheduledLesson(models.Model):
         return f"{self.lesson} @ {self.time_slot}"
 
 
-# 🕐 Пожелания преподавателя по времени
+# Пожелания преподавателя по времени
 class TeacherTimePreference(models.Model):
     teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
     excluded_slot = models.ForeignKey(TimeSlot, on_delete=models.CASCADE)
@@ -205,7 +212,7 @@ class TeacherTimePreference(models.Model):
         unique_together = ('teacher', 'excluded_slot')
 
 
-# 🏫 Пожелания преподавателя по аудиториям
+# Пожелания преподавателя по аудиториям
 class TeacherRoomPreference(models.Model):
     teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
     discipline = models.ForeignKey(Discipline, on_delete=models.CASCADE)

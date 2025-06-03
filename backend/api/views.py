@@ -93,6 +93,7 @@ def get_schedule_for_group(request, group_id):
         logger.error(f"Error in get_schedule_for_group for group {group_id}, week_is_even={is_even}: {e}", exc_info=True) 
         return Response({"error": "Внутренняя ошибка сервера при получении расписания"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
 @api_view(['GET'])
 # @authentication_classes([JWTAuthentication]) # Добавьте по необходимости
 # @permission_classes([permissions.IsAuthenticated]) # Например, все залогиненные могут смотреть списки
