@@ -1,9 +1,9 @@
 from django.shortcuts import render
 from django.http import JsonResponse
-from rest_framework.views import APIView
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
+from .constraint_engine import ConstraintEngine
 from .models import *
 from .serializers import *
 
@@ -113,3 +113,37 @@ def group_pairs(request, group_id):
     pairs = Pair.objects.filter(building=building).order_by('number')
     serializer = PairSerializer(pairs, many=True)
     return Response(serializer.data)
+
+@api_view(['POST'])
+def create_ScheduledLesson(request,lesson_id, timeslot_id):
+    try:
+        lesson = Lesson.objects.get(id=lesson_id)
+        time_slot = TimeSlot.objects.get(id=timeslot_id)
+    except Lesson.DoesNotExist:
+        return Response({"error": "Занятие не найдено"}, status=status.HTTP_404_NOT_FOUND)
+    except TimeSlot.DoesNotExist:
+        return Response({"error": "Слот не найден"}, status=status.HTTP_404_NOT_FOUND)
+
+    # Проверка ограничений
+    engine = ConstraintEngine()
+    context = {
+        "lesson": lesson,
+        "time_slot": time_slot,
+    }
+    results = engine.evaluate(context)
+
+    failed = {name: info for name, info in results.items() if not info["passed"]}
+
+    if failed:
+        return Response({
+            "status": "error",
+            "violations": failed
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    # Удаляем старое расписание
+    ScheduledLesson.objects.filter(lesson=lesson).delete()
+
+    # Создаем новое
+    ScheduledLesson.objects.create(lesson=lesson, time_slot=time_slot)
+
+    return Response({"status": "ok"}, status=status.HTTP_200_OK)
