@@ -10,6 +10,7 @@ urlpatterns = [
     path('hello/', views.hello_world),
     path('login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('schedule/group/<int:group_id>/', get_schedule_for_group, name='get-schedule-for-group'),
     path('create/<str:model_name>/', create_object), # Универсальное создание объектов
     path('get/<str:object_name>/<int:object_id>/',get_object), # Универсальный поиск объектов
     path('update/<str:object_name>/<int:object_id>/',update_object), # Универсальное обновление объекта

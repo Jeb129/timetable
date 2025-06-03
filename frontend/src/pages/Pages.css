@@ -706,3 +706,72 @@ html, body, #root { /* #root - это обычно div, куда рендери�
   background-color: #007bff;
   color: white;
 }
+.admin-sections-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 20px; /* Расстояние между секциями */
+  margin-bottom: 30px; /* Отступ перед фильтром расписания */
+}
+
+.admin-actions-section {
+  padding: 20px;
+  background-color: #ffffff; /* Белый фон для каждой секции */
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1); /* Легкая тень */
+}
+
+.admin-actions-title {
+  margin-top: 0;
+  margin-bottom: 18px;
+  font-size: 1.15em; /* Немного крупнее */
+  color: #343a40;
+  border-bottom: 1px solid #e9ecef;
+  padding-bottom: 10px;
+}
+
+.admin-actions-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px; /* Расстояние между кнопками */
+}
+
+.admin-action-button { /* Базовый стиль кнопки */
+  padding: 10px 18px; /* Увеличим padding */
+  font-size: 0.9rem; /* Немного меньше базового шрифта */
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  font-weight: 500;
+  min-width: 180px; /* Минимальная ширина для единообразия */
+  text-align: center;
+}
+
+.admin-action-button:hover {
+  opacity: 0.9;
+  transform: translateY(-1px); /* Небольшой эффект при наведении */
+}
+
+.admin-action-button:active {
+  transform: translateY(0px);
+}
+
+/* Цвета для кнопок (примеры, подберите свои) */
+.admin-action-button.color-buildings { background-color: #546E7A; } /* Темно-серый-синий */
+.admin-action-button.color-rooms { background-color: #78909C; }    /* Светлее */
+.admin-action-button.color-equipment { background-color: #90A4AE; } /* Еще светлее */
+.admin-action-button.color-teachers { background-color: #00796B; } /* Тиловый */
+
+.admin-action-button.color-institutes { background-color: #455A64; } 
+.admin-action-button.color-directions { background-color: #607D8B; }
+.admin-action-button.color-eduforms { background-color: #7E57C2; } /* Фиолетовый */
+.admin-action-button.color-edulevels { background-color: #5E35B1; }
+.admin-action-button.color-groups { background-color: #0288D1; }   /* Голубой */
+.admin-action-button.color-disciplines { background-color: #D81B60; } /* Розовый */
+.admin-action-button.color-lessontypes { background-color: #F4511E; } /* Оранжевый */
+.admin-action-button.color-controltypes { background-color: #FFB300; color: #333; } /* Желтый, темный текст */
+.admin-action-button.color-curriculum { background-color: #388E3C; } /* Зеленый */
+
+.admin-action-button.color-pairs { background-color: #6A1B9A; } /* Темно-фиолетовый */
+.admin-action-button.color-weekdays { background-color: #8E24AA; }

@@ -39,6 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     "api",
     'corsheaders',
+    'rest_framework',             
+    'rest_framework_simplejwt'
 ]
 
 MIDDLEWARE = [
@@ -106,6 +108,33 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        # Если вы также хотите поддерживать аутентификацию через сессии Django 
+        # (например, для удобства работы с Browsable API), добавьте:
+        # 'rest_framework.authentication.SessionAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        # Установите политику прав по умолчанию. Например:
+        'rest_framework.permissions.IsAuthenticated', # Все эндпоинты требуют аутентификации
+        # или 'rest_framework.permissions.AllowAny', # Все эндпоинты доступны (не рекомендуется для всего API)
+    ),
+    'DEFAULT_RENDERER_CLASSES': (
+        'rest_framework.renderers.JSONRenderer',      # JSON будет основным форматом ответа
+        'rest_framework.renderers.BrowsableAPIRenderer', # Для HTML-представления в браузере
+    ),
+    'DEFAULT_PARSER_CLASSES': (
+        'rest_framework.parsers.JSONParser', # Для разбора JSON в теле запроса
+        # 'rest_framework.parsers.FormParser', # Если будете принимать данные из HTML-форм
+        # 'rest_framework.parsers.MultiPartParser', # Для загрузки файлов
+    ),
+    # Настройки для simplejwt (можно вынести в отдельный словарь SIMPLE_JWT)
+    # 'SIMPLE_JWT': {
+    #     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60), # Пример времени жизни токена
+    #     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    # }
+}
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
