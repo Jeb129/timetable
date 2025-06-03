@@ -1,0 +1,12 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\backend",
+    "\\docker",
+    "\\frontend",
+    "\\frontend\\src",
+    "\\frontend\\src\\pages"
+  ],
+  "SelectedNode": "\\frontend\\src\\pages\\TimetableView.jsx",
+  "PreviewInSolutionExplorer": false
+}
