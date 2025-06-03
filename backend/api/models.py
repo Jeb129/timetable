@@ -168,13 +168,14 @@ class LessonRequirement(models.Model):
 
 # Планируемое занятие
 class Lesson(models.Model):
-    curriculum = models.ForeignKey(Curriculum, on_delete=models.CASCADE)
+    discipline = models.ForeignKey(Discipline, on_delete=models.CASCADE)
+    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
+    lesson_type = models.ForeignKey(LessonType, on_delete=models.CASCADE)
     room = models.ForeignKey(Room, on_delete=models.CASCADE)
     groups = models.ManyToManyField(StudentGroup)
-    # Фактическое распределение — через TimeSlot
 
     def __str__(self):
-        return f"{self.curriculum} в {self.room}"
+        return f"({self.lesson_type}){self.discipline} в {self.room}"
 
 
 # Временной слот

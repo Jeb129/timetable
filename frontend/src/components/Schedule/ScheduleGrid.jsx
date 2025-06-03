@@ -148,7 +148,7 @@ function ScheduleGrid({ editable = false, filterId = null, initialIsEvenWeek = t
   const handleLessonChange = useCallback(async (day, timeIndex, newLessonText) => {
     if (!editable || !scheduleData) return; // Добавил !scheduleData
     
-    const cellData = scheduleData[day]?.[timeIndex];
+    const cellData = scheduleData[day]?.[timeIndex];2`1 `
     if (!cellData) {
         console.error("Cell data not found for lesson change", day, timeIndex);
         return;
