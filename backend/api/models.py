@@ -118,7 +118,7 @@ class StudentGroup(models.Model):
     student_count = models.PositiveIntegerField()
 
     def __str__(self):
-        return f"{self.admission_year}-{self.direction.short_name}-{self.group_number}.{self.subgroup_number}"
+        return f"{str(self.admission_year)[-2:]}-{self.direction.short_name}-{self.group_number}.{self.subgroup_number}"
 
 
 # 👨‍🏫 Преподаватели
