@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; // Добавил useEffect для проверки токена
 import { useNavigate } from 'react-router-dom';
+import './Pages.css'; // Убедитесь, что путь правильный
 
 function CreateUserPage() {
   const [username, setUsername] = useState('');
@@ -7,56 +8,102 @@ function CreateUserPage() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const token = localStorage.getItem('accessToken');
+  // Лучше получать токен непосредственно перед запросом или проверять его актуальность
+  // Но для примера оставим так. Или можно вынести в useEffect для проверки при загрузке.
+  const token = sessionStorage.getItem('auth') === 'true' ? "some_dummy_token_if_needed_by_api" : null; 
+  // Важно: API ожидает Bearer токен. sessionStorage 'auth'='true' - это просто флаг аутентификации.
+  // Вам нужен реальный JWT токен, если API его требует.
+  // Если ваше API /api/create-user/ не требует Bearer токена, когда вы уже авторизованы через сессию Django,
+  // то заголовок Authorization можно и не отправлять.
+  // Я предполагаю, что 'auth'='true' в sessionStorage означает, что сессия Django активна,
+  // и fetch автоматически отправит куки сессии.
+
+  useEffect(() => {
+    // Перенаправляем, если пользователь не авторизован (например, если sessionStorage 'auth' не 'true')
+    if (sessionStorage.getItem('auth') !== 'true') {
+      navigate('/login'); // или на главную, если неавторизованным нельзя сюда
+      alert('Для создания пользователя необходимо войти в систему.');
+    }
+  }, [navigate]);
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
+    if (!username || !password) {
+        setError('Имя пользователя и пароль обязательны.');
+        return;
+    }
+    if (password.length < 6) { // Пример простой валидации
+        setError('Пароль должен быть не менее 6 символов.');
+        return;
+    }
+
+    const actualToken = localStorage.getItem('accessToken'); // Если используете реальный JWT токен
+
     try {
-      const res = await fetch('/api/create-user/', {
+      const headers = {
+        'Content-Type': 'application/json',
+      };
+      // Если ваше API /api/create-user/ защищено JWT токеном
+      if (actualToken) {
+        headers['Authorization'] = `Bearer ${actualToken}`;
+      }
+      // Если API использует сессии Django, то Authorization не нужен, куки отправятся автоматически.
+
+      const res = await fetch('/api/create-user/', { // Убедитесь, что этот URL настроен в Django urls.py
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
+        headers: headers,
         body: JSON.stringify({ username, password }),
       });
 
+      const responseData = await res.json().catch(() => null); // Попытка прочитать JSON, даже если ошибка
+
       if (!res.ok) {
-        const data = await res.json();
-        setError(data.error || 'Ошибка создания пользователя');
+        setError(responseData?.error || responseData?.detail || `Ошибка: ${res.status} ${res.statusText}`);
         return;
       }
 
-      alert('Пользователь создан!');
-      navigate('/schedule');
+      alert('Пользователь успешно создан!');
+      navigate('/edit'); // Перенаправляем на страницу редактирования или куда вам нужно
     } catch (err) {
-      setError('Ошибка подключения к серверу');
+      console.error("Fetch error:", err);
+      setError('Ошибка подключения к серверу. Проверьте консоль.');
     }
   };
 
   return (
-    <div className="create-user-form">
-      <h2>Создание пользователя</h2>
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          placeholder="Имя пользователя"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          required
-        />
-        <input
-          type="password"
-          placeholder="Пароль"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        <button type="submit">Создать</button>
-        {error && <p className="error">{error}</p>}
-      </form>
+    <div className="create-user-page-container">
+      <div className="create-user-form-wrapper">
+        <h2>Создание нового пользователя</h2>
+        <form onSubmit={handleSubmit}>
+          <div className="form-input-group">
+            <label htmlFor="username">Имя пользователя:</label>
+            <input
+              id="username"
+              type="text"
+              placeholder="Введите имя пользователя"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+            />
+          </div>
+          <div className="form-input-group">
+            <label htmlFor="password">Пароль:</label>
+            <input
+              id="password"
+              type="password"
+              placeholder="Введите пароль"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+          <button type="submit">Создать пользователя</button>
+          {error && <p className="error-message">{error}</p>} {/* Изменен класс */}
+        </form>
+      </div>
     </div>
   );
 }

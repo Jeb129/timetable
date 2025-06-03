@@ -14,9 +14,7 @@ COPY docker/requirements.txt ./requirements.txt
 
 # Устанавливаем зависимости
 RUN pip install --upgrade pip && \
-    pip install -r requirements.txt && \
-    pip install djangorestframework && \
-    pip install djangorestframework djangorestframework-simplejwt
+    pip install -r requirements.txt
 
 
 # Копируем весь код проекта

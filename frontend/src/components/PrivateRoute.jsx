@@ -1,12 +1,18 @@
 // src/components/PrivateRoute.jsx
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 
 const PrivateRoute = ({ children }) => {
-  const token = localStorage.getItem('access'); // или другая логика авторизации
+  const isAuthenticated = sessionStorage.getItem('auth') === 'true';
+  const location = useLocation();
 
-  return isAuthenticated ? children : <Navigate to="/" />;
+  if (!isAuthenticated) {
+    // Перенаправляем на страницу входа, запоминая текущий путь,
+    // чтобы после входа можно было вернуться обратно.
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
 
+  return children; // Если аутентифицирован, рендерим дочерний компонент
 };
 
 export default PrivateRoute;
