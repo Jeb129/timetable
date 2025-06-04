@@ -105,14 +105,17 @@ def get_schedule_for_group(request, group_id):
 
 @api_view(['GET'])
 def list_objects(request, model_name):
+    print('Ищу модель')
     model_info = MODEL_MAP.get(model_name.lower())
     if not model_info:
         return Response({"error": "Unknown model type"}, status=status.HTTP_400_BAD_REQUEST)
-
+    print('Нашел модель')
     model_class, serializer_class = model_info
     
     queryset = model_class.objects.all()
+    print('Нашел данные')
     serializer = serializer_class(queryset, many=True)
+    print('Успех')
     return Response(serializer.data)
 
 @api_view(['GET'])

@@ -5,6 +5,7 @@ import LoginPage from './pages/LoginPage';
 import PrivateRoute from './components/PrivateRoute';
 import Navigation from './components/navigation/navigation.jsx';
 
+
 import CreateDefaultPage from './pages/Creations/CreateDefault.jsx';
 import CreateBuildingPage from './pages/Creations/Building/CreateBuildingPage.jsx';
 import CreateControlTypePage from './pages/Creations/ControlType/CreateControlTypePage.jsx';
@@ -22,6 +23,8 @@ import CreateStudentGroupPage from './pages/Creations/StudentGroup/CreateStudent
 import CreateTeacherPage from './pages/Creations/Teacher/CreateTeacherPage.jsx';
 import CreateUserPage from './pages/Creations/User/CreateUserPage.jsx';
 import CreateWeekdayPage from './pages/Creations/WeekDay/CreateWeekdayPage.jsx';
+import CreateTimeSlotPage from './pages/Creations/Timeslot/CreateTimeSlot.jsx';
+import InitializeTimeSlotsPage from './pages/InitializeTimeSlotsPage.jsx';
 
 function App() {
   return (
@@ -38,6 +41,7 @@ function App() {
         <Route path="/edit" element={<PrivateRoute><TimetableEditor /></PrivateRoute>} />
         <Route path="/create-user" element={<PrivateRoute><CreateUserPage /></PrivateRoute>} />
         <Route path="/dbcreate" element={<PrivateRoute><CreateDefaultPage /></PrivateRoute>} />
+        <Route path="/admin/create-timeslot" element={<PrivateRoute><CreateTimeSlotPage /></PrivateRoute>} />
         <Route path="/admin/create-building" element={<PrivateRoute><CreateBuildingPage /></PrivateRoute>} />
         <Route path="/admin/create-room" element={<PrivateRoute><CreateRoomPage /></PrivateRoute>} />
         <Route  path="/admin/create-institute" element={ <PrivateRoute> <CreateInstitutePage /> </PrivateRoute>  }   />
