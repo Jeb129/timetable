@@ -224,6 +224,61 @@ useEffect(() => {
         setIsModalOpen(true);
     } // ... остальные else if ...
 };
+ const handleDeleteScheduledLesson = async (scheduledLessonIdToDelete, dayName, timeIndex) => {
+    if (!editable || !scheduledLessonIdToDelete) return;
+
+    setIsLoadingLessons(true); 
+    setError(null);
+
+    try {
+        await axios.delete(`http://localhost:8000/api/delete/scheduledlesson/${scheduledLessonIdToDelete}/`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        // Обновляем UI: сбрасываем ячейку до "пустой", но сохраняем ее timeSlotId и позиционные данные
+        setScheduleData(prevSchedule => {
+            const newSchedule = JSON.parse(JSON.stringify(prevSchedule));
+            if (newSchedule[dayName] && newSchedule[dayName][timeIndex]) {
+                const cellToReset = newSchedule[dayName][timeIndex];
+                
+                // Сохраняем важные идентификаторы ячейки
+                const originalCellId = cellToReset.id; // ID для Droppable, если он генерируется на основе позиции
+                const originalTimeSlotId = cellToReset.timeSlotId; 
+
+                // Сбрасываем поля, связанные с уроком
+                cellToReset.lessonText = '';
+                cellToReset.lessonId = null;
+                cellToReset.scheduledLessonId = null;
+                cellToReset.lessonDetails = null;
+                cellToReset.isPlaceholder = true; // Помечаем как пустую
+
+                // Убедимся, что ID для Draggable/Droppable уникален и стабилен для пустой ячейки
+                // Если вы генерировали ID для пустых ячеек на основе дня и времени, восстановите его
+                // cellToReset.id = `cell-${dayName}-${timeIndex}-${isEvenWeek}-${originalTimeSlotId || 'no-ts-id'}`; // Пример
+                // Если ID ячейки (для Droppable) должен быть привязан к timeSlotId, то это уже есть
+                // А ID для Draggable теперь не будет, т.к. isPlaceholder=true
+            }
+            return newSchedule;
+        });
+        
+        // После локального обновления можно дополнительно перезагрузить данные с сервера для полной консистентности
+        // Если вы уверены в локальном обновлении, этот вызов можно убрать для более быстрого UI,
+        // но он гарантирует, что данные точно соответствуют серверу.
+        await fetchAndDisplaySchedule(); 
+        
+        console.log(`ScheduledLesson ID ${scheduledLessonIdToDelete} успешно удален.`);
+
+    } catch (err) {
+        console.error("Ошибка при удалении ScheduledLesson:", err.response?.data || err.message || err);
+        setError("Не удалось удалить занятие: " + (err.response?.data?.detail || JSON.stringify(err.response?.data) || err.message));
+        // Если произошла ошибка, можно попробовать перезагрузить данные, чтобы откатить оптимистичное обновление,
+        // но это может быть сложно, если локальное состояние уже сильно изменилось.
+        // Проще всего - сообщить об ошибке и позволить пользователю обновить страницу или попробовать снова.
+        await fetchAndDisplaySchedule(); // Попытка синхронизировать с сервером в случае ошибки
+    } finally {
+        setIsLoadingLessons(false);
+    }
+};
 
   const handleCreateLessonSubmit = async (lessonFormDataFromModal) => {
     if (!modalTargetCell || !modalTargetCell.timeSlotId || !filterId || !token) {
@@ -395,9 +450,22 @@ useEffect(() => {
                       onBlur={(e) => editable && lessonItem.scheduledLessonId && handleLessonTextEdit(day, timeIndex, e.target.value)}
                       placeholder={canAddLesson ? "+" : "-"} 
                       className="schedule-grid-lesson-input" 
+                      
                       disabled={!editable}
                       readOnly={!lessonItem.scheduledLessonId || !editable} // Только для существующих уроков (если есть), или если не редактируемый режим
                     />
+                    {editable && lessonItem.scheduledLessonId && (
+                      <button 
+                          onClick={(e) => { 
+                              e.stopPropagation(); // Предотвращаем всплытие до onClick ячейки
+                              handleDeleteScheduledLesson(lessonItem.scheduledLessonId, day, timeIndex); 
+                          }} 
+                          className="delete-lesson-btn" // Добавьте стили для этой кнопки
+                          title="Удалить занятие"
+                      >
+                        ✖ {/* Символ крестика (X) */}
+                      </button>
+                    )}
                     {editable && lessonItem.scheduledLessonId && (
                       <div className="lesson-move-buttons">
                         <button onClick={(e) => {e.stopPropagation(); handleMoveLesson(day, timeIndex, 'up')}} className="move-btn" title="Вверх">↑</button>

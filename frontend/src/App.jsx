@@ -22,6 +22,7 @@ import CreateStudentGroupPage from './pages/Creations/StudentGroup/CreateStudent
 import CreateTeacherPage from './pages/Creations/Teacher/CreateTeacherPage.jsx';
 import CreateUserPage from './pages/Creations/User/CreateUserPage.jsx';
 import CreateWeekdayPage from './pages/Creations/WeekDay/CreateWeekdayPage.jsx';
+import InitializeTimeSlotsPage from './pages/InitializeTimeSlotsPage.jsx';
 
 function App() {
   return (
