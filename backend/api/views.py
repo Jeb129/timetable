@@ -41,16 +41,61 @@ MODEL_MAP = {
 }
 @api_view(['POST'])
 def create_object(request, model_name):
-    model_info = MODEL_MAP.get(model_name.lower())
+    logger.info(f"--- Create Object: model_name='{model_name}' ---")
+    logger.info(f"Request User: {request.user}, Is Authenticated: {request.user.is_authenticated}")
+    logger.info(f"Raw request.data: {request.data}")
+
+    model_name_lower = model_name.lower()
+    model_info = MODEL_MAP.get(model_name_lower)
+
     if not model_info:
+        logger.error(f"Unknown model: {model_name_lower}")
         return Response({"error": "Unknown model"}, status=status.HTTP_400_BAD_REQUEST)
 
-    _, serializer_class = model_info
-    serializer = serializer_class(data=request.data)
+    model_class, base_serializer_class = model_info # base_serializer_class - это тот, что в MODEL_MAP
+
+    # ---- СПЕЦИАЛЬНАЯ ОБРАБОТКА ДЛЯ СОЗДАНИЯ TimeSlot ----
+    if model_name_lower == 'timeslot':
+        # Создаем временный сериализатор "на лету" только для ЗАПИСИ TimeSlot,
+        # который ожидает ID для ForeignKey полей.
+        class TimeSlotWriteSerializer(serializers.ModelSerializer):
+            # Явно указываем, что weekday и pair - это PrimaryKeyRelatedField,
+            # которые будут принимать ID и проверять их существование.
+            # Это то, что ModelSerializer с fields='__all__' сделал бы по умолчанию,
+            # если бы не было конфликтующих read_only полей с тем же source.
+            weekday = serializers.PrimaryKeyRelatedField(queryset=Weekday.objects.all())
+            pair = serializers.PrimaryKeyRelatedField(queryset=Pair.objects.all())
+            
+            class Meta:
+                model = TimeSlot
+                fields = ['weekday', 'pair', 'is_even_week'] # Только поля для создания
+
+        current_serializer_class = TimeSlotWriteSerializer
+        logger.info(f"Using DYNAMIC TimeSlotWriteSerializer for creation.")
+    else:
+        # Для всех других моделей используем сериализатор из MODEL_MAP
+        current_serializer_class = base_serializer_class
+        logger.info(f"Using ModelMap Serializer: {current_serializer_class.__name__}")
+    # ---- КОНЕЦ СПЕЦИАЛЬНОЙ ОБРАБОТКИ ДЛЯ TimeSlot ----
+
+    serializer = current_serializer_class(data=request.data)
+    
     if serializer.is_valid():
-        instance = serializer.save()
-        return Response(serializer_class(instance).data, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        logger.info(f"Serializer is VALID. Validated data: {serializer.validated_data}")
+        try:
+            instance = serializer.save()
+            logger.info(f"Instance SAVED: {instance}")
+            # Для ответа используем сериализатор из MODEL_MAP, чтобы получить детали (если он для чтения)
+            # или тот же, если он подходит для чтения
+            response_serializer = base_serializer_class(instance) 
+            return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            logger.error(f"ERROR during serializer.save() for {model_name_lower}: {e}", exc_info=True)
+            return Response({"error": f"Internal server error during save: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    else:
+        logger.error(f"Serializer is INVALID for {model_name_lower}. Errors: {serializer.errors}")
+        logger.error(f"Data sent to serializer: {request.data}")
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
 def get_schedule_for_group(request, group_id):
@@ -105,14 +150,57 @@ def get_schedule_for_group(request, group_id):
 # @authentication_classes([JWTAuthentication]) # Добавьте по необходимости
 # @permission_classes([permissions.IsAuthenticated]) # Например, все залогиненные могут смотреть списки
 def list_objects(request, model_name):
-    model_info = MODEL_MAP.get(model_name.lower())
+    logger.info(f"--- List Objects: model_name='{model_name}' ---")
+    logger.info(f"Request query_params: {request.query_params}")
+
+    model_name_lower = model_name.lower()
+    model_info = MODEL_MAP.get(model_name_lower)
     if not model_info:
+        logger.error(f"Unknown model type for list: {model_name_lower}")
         return Response({"error": "Unknown model type"}, status=status.HTTP_400_BAD_REQUEST)
 
     model_class, serializer_class = model_info
-    
     queryset = model_class.objects.all()
+    logger.info(f"Initial queryset for {model_name_lower} count: {queryset.count()}")
+
+    # --- НАЧАЛО СПЕЦИАЛЬНОЙ ЛОГИКИ ФИЛЬТРАЦИИ ДЛЯ TimeSlot ---
+    if model_name_lower == 'timeslot':
+        weekday_id_filter = request.query_params.get('weekday')
+        pair_id_filter = request.query_params.get('pair')
+        is_even_week_filter_str = request.query_params.get('is_even_week')
+
+        filters_applied = {}
+        if weekday_id_filter:
+            try:
+                filters_applied['weekday_id'] = int(weekday_id_filter)
+            except ValueError:
+                logger.warning(f"Invalid weekday_id for timeslot filter: {weekday_id_filter}")
+                return Response({"error": "Invalid weekday ID format"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if pair_id_filter:
+            try:
+                filters_applied['pair_id'] = int(pair_id_filter)
+            except ValueError:
+                logger.warning(f"Invalid pair_id for timeslot filter: {pair_id_filter}")
+                return Response({"error": "Invalid pair ID format"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if is_even_week_filter_str is not None:
+            filters_applied['is_even_week'] = (is_even_week_filter_str.lower() == 'true')
+        
+        if filters_applied: # Применяем фильтры только если они есть
+            logger.info(f"Applying filters to TimeSlot queryset: {filters_applied}")
+            queryset = queryset.filter(**filters_applied) # Распаковываем словарь фильтров
+            logger.info(f"Filtered TimeSlot queryset count: {queryset.count()}")
+        else:
+            logger.info("No specific filters applied for TimeSlot, returning all.")
+            
+    # --- КОНЕЦ СПЕЦИАЛЬНОЙ ЛОГИКИ ФИЛЬТРАЦИИ ДЛЯ TimeSlot ---
+    # Можно добавить сортировку для всех моделей для консистентности
+    # if hasattr(model_class, 'id'): # или другое общее поле для сортировки
+    #    queryset = queryset.order_by('id')
+        
     serializer = serializer_class(queryset, many=True)
+    # logger.debug(f"Serialized data for {model_name_lower} (first 2 if any): {serializer.data[:2]}") # Может быть очень много данных
     return Response(serializer.data)
 
 @api_view(['GET'])
