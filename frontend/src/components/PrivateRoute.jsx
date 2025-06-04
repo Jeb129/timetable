@@ -7,8 +7,6 @@ const PrivateRoute = ({ children }) => {
   const location = useLocation();
 
   if (!isAuthenticated) {
-    // Перенаправляем на страницу входа, запоминая текущий путь,
-    // чтобы после входа можно было вернуться обратно.
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

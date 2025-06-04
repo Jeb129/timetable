@@ -19,11 +19,17 @@ import CreateCurriculumPage from './pages/CreateCurriculumPage.jsx';
 import CreateEducationDirectionPage from './pages/CreateEducationDirectionPage';
 import CreateEducationFormPage from './pages/CreateEducationFormPage';
 import CreateEducationLevelPage from './pages/CreateEducationLevelPage';
+import Navigation from './components/navigation/navigation.jsx';
 
 
 function App() {
   return (
     <Router>
+      <Navigation links={[
+        ['/','Просмотр расписания'],
+        ['/login','Вход'],
+        ['/edit','Редактирование расписания'],
+      ]} />
       <Routes>
         <Route path="/" element={<TimetableView />} />
         <Route path="/login" element={<LoginPage />} />
