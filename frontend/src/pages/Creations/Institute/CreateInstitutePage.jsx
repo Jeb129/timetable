@@ -27,15 +27,13 @@ function CreateInstitutePage() {
             if (!token) return; // Не делаем запрос, если нет токена
 
             try {
-                const response = await axios.get('http://localhost:8000/api/get/building/', {
+                const response = await axios.get('http://localhost:8000/api/list/building/', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 setBuildings(response.data || []); // DRF обычно возвращает массив в data
             } catch (err) {
                 console.error('Ошибка загрузки списка корпусов:', err.response?.data || err);
                 setError('Не удалось загрузить список корпусов. Попробуйте обновить страницу.');
-                // Для простоты можно оставить моковые данные, если API еще нет
-                // setBuildings([ { id: 1, code: 'К1' }, { id: 2, code: 'К2' }]);
             }
         };
         fetchBuildings();
