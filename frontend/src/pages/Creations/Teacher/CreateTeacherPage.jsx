@@ -2,7 +2,9 @@
 import React, { useState } from 'react'; // Убедитесь, что useEffect не нужен здесь, если нет других сайд-эффектов
 import { useNavigate } from 'react-router-dom'; // Раскомментируйте, если нужно перенаправление
 import axios from 'axios'; // Импортируем axios
-import './Pages.css'; // Убедитесь, что путь к Pages.css правильный
+import Navigation from '../../../components/navigation/navigation';
+import '../../Pages.css';
+import '../../../assets/form.css'
 
 function CreateTeacherPage() {
     const [fullName, setFullName] = useState('');
@@ -82,11 +84,29 @@ function CreateTeacherPage() {
     };
 
     return (
-        <div className="admin-form-page-container">
-            <div className="admin-form-wrapper">
-                <div className="admin-form-header">
+        <div className="page-container">
+            <Navigation links={[
+                ['/create-user', 'Создание пользователя'],
+                ['/admin/create-building', 'Создание корпуса'],
+                ['/admin/create-room', 'Создание аудитории'],
+                ['/admin/create-institute', 'Создание института'],
+                ['/admin/create-teacher', 'Создание преподавателя'],
+                ['/admin/create-studentgroup', 'Создание группы'],
+                ['/admin/create-discipline', 'Создание дисциплины'],
+                ['/admin/create-lessontype', 'Создание типа занятия'],
+                ['/admin/create-pair', 'Создание пары'],
+                ['/admin/create-weekday', 'Создание дня недели'],
+                ['/admin/create-controltype', 'Создание формы контроля'],
+                ['/admin/create-equipment', 'Создание оборудования'],
+                ['/admin/create-curriculum', 'Создание учебного плана'],
+                ['/admin/create-educationdirection', 'Создание направления подготовки'],
+                ['/admin/create-educationform', 'Создание формы обучения'],
+                ['/admin/create-educationlevel', 'Создание уровня образования'],
+            ]} />
+            <div className="form-comtainer">
+                <div className="form-header">
                 <h2>Добавление нового преподавателя</h2>
-                <button onClick={handleGoBack} className="admin-form-back-button">
+                <button onClick={handleGoBack} className="form-back-button">
                         ← Назад 
                     </button>
                     </div>
@@ -104,7 +124,7 @@ function CreateTeacherPage() {
                             required
                         />
                     </div>
-                    <button type="submit" className="admin-form-submit-button">Добавить преподавателя</button>
+                    <button type="submit" className="form-submit-button">Добавить преподавателя</button>
                 </form>
             </div>
         </div>

@@ -101,40 +101,6 @@ export default function TimetableEditor() {
           </button>
         </div>
       </div>
-
-      <div className="admin-sections-wrapper">
-        <div className="admin-actions-section">
-          <h3 className="admin-actions-title">Основные справочники</h3>
-          <div className="admin-actions-buttons">
-            <button onClick={navigateToCreateBuilding} className="admin-action-button color-buildings">Добавить корпус</button>
-            <button onClick={navigateToCreateRoom} className="admin-action-button color-rooms">Добавить аудиторию</button>
-            <button onClick={navigateToCreateEquipment} className="admin-action-button color-equipment">Добавить оборудование</button>
-            <button onClick={navigateToCreateTeacher} className="admin-action-button color-teachers">Добавить преподавателя</button>
-          </div>
-        </div>
-        <div className="admin-actions-section">
-          <h3 className="admin-actions-title">Учебный процесс</h3>
-          <div className="admin-actions-buttons">
-            <button onClick={navigateToCreateInstitute} className="admin-action-button color-institutes">Добавить институт</button>
-            <button onClick={navigateToCreateEducationDirection} className="admin-action-button color-directions">Добавить направление</button>
-            <button onClick={navigateToCreateEducationForm} className="admin-action-button color-eduforms">Добавить форму обучения</button>
-            <button onClick={navigateToCreateEducationLevel} className="admin-action-button color-edulevels">Добавить уровень обучения</button>
-            <button onClick={navigateToCreateStudentGroup} className="admin-action-button color-groups">Добавить учебную группу</button>
-            <button onClick={navigateToCreateDiscipline} className="admin-action-button color-disciplines">Добавить дисциплину</button>
-            <button onClick={navigateToCreateLessonType} className="admin-action-button color-lessontypes">Добавить вид занятия</button>
-            <button onClick={navigateToCreateControlType} className="admin-action-button color-controltypes">Добавить тип контроля</button>
-            <button onClick={navigateToCreateCurriculum} className="admin-action-button color-curriculum">Добавить в учебный план</button>
-          </div>
-        </div>
-        <div className="admin-actions-section">
-          <h3 className="admin-actions-title">Элементы расписания</h3>
-          <div className="admin-actions-buttons">
-            <button onClick={navigateToCreatePair} className="admin-action-button color-pairs">Добавить пару (звонок)</button>
-            <button onClick={navigateToCreateWeekday} className="admin-action-button color-weekdays">Добавить день недели</button>
-          </div>
-        </div>
-      </div>
-
       <div className="timetable-filter-section">
         <label htmlFor="group-edit-filter" className="timetable-filter-label">Выберите группу для редактирования:</label>
         <select
