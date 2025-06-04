@@ -109,7 +109,7 @@ def list_objects(request, model_name):
     return Response(serializer.data)
 
 @api_view(['GET'])
-def get_object(request, object_name, object_id):
+def get_object_by_id(request, object_name, object_id):
     object_info = MODEL_MAP.get(object_name)
     if not object_info:
         return Response({"error": "Unknown model"}, status=status.HTTP_400_BAD_REQUEST)
@@ -122,6 +122,21 @@ def get_object(request, object_name, object_id):
         return Response({'error': 'Object not found'}, status=status.HTTP_404_NOT_FOUND)
 
     serializer = serializer_class(obj)
+    return Response(serializer.data)
+@api_view(['GET'])
+def get_objects(request, object_name):
+    object_info = MODEL_MAP.get(object_name)
+    if not object_info:
+        return Response({"error": "Unknown model"}, status=status.HTTP_400_BAD_REQUEST)
+
+    object_class, serializer_class = object_info
+
+    try:
+        obj = object_class.objects.all()
+    except object_class.DoesNotExist:
+        return Response({'error': 'Object not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = serializer_class(obj, many=True)
     return Response(serializer.data)
 
 @api_view(['PUT'])

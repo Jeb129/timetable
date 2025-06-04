@@ -27,8 +27,7 @@ function CreateInstitutePage() {
             if (!token) return; // Не делаем запрос, если нет токена
 
             try {
-                // Предполагаем, что у вас есть эндпоинт /api/buildings/ для получения списка зданий
-                const response = await axios.get('http://localhost:8000/api/buildings/', {
+                const response = await axios.get('http://localhost:8000/api/get/building/', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 setBuildings(response.data || []); // DRF обычно возвращает массив в data
