@@ -23,6 +23,8 @@ function CreateDefaultPage() {
                 ['/admin/create-educationform', 'Создание формы обучения'],
                 ['/admin/create-educationlevel', 'Создание уровня образования'],
                 ["/admin/create-timeslot", 'Создать слот расписания'],
+                ["/admin/create-teacher-time-preference/",'Ввести предпочтение по времени'],
+                ["/admin/create-teacher-room-preference/",'Ввести предпочтение по аудитории'],
             ]} />
             <div className="page-container">Выберите справочник</div>
         </div>

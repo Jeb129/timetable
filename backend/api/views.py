@@ -80,7 +80,6 @@ def create_object(request, model_name):
         current_serializer_class = base_serializer_class
         logger.info(f"Using ModelMap Serializer: {current_serializer_class.__name__}")
     # ---- КОНЕЦ СПЕЦИАЛЬНОЙ ОБРАБОТКИ ДЛЯ TimeSlot ----
-
     serializer = current_serializer_class(data=request.data)
     
     if serializer.is_valid():

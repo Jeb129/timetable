@@ -26,6 +26,8 @@ import CreateWeekdayPage from './pages/Creations/WeekDay/CreateWeekdayPage.jsx';
 import CreateTimeSlotPage from './pages/Creations/Timeslot/CreateTimeSlot.jsx';
 import InitializeTimeSlotsPage from './pages/InitializeTimeSlotsPage.jsx';
 import PrebuildConstraints from './pages/ConstraintEnginePrebuild.jsx';
+import CreateTeacherTimePreferencePage from './pages/Creations/Teacher/CreateTeacherTimePreferencePage.jsx';
+import CreateTeacherRoomPreferencePage from './pages/Creations/Teacher/CreateTeacherRoomPreferencePage.jsx';
 
 function App() {
   return (
@@ -42,6 +44,8 @@ function App() {
         <Route path="/edit" element={<PrivateRoute><TimetableEditor /></PrivateRoute>} />
         <Route path="/create-user" element={<PrivateRoute><CreateUserPage /></PrivateRoute>} />
         <Route path="/dbcreate" element={<PrivateRoute><CreateDefaultPage /></PrivateRoute>} />
+        <Route path="/admin/create-teacher-time-preference/" element={<PrivateRoute><CreateTeacherTimePreferencePage /></PrivateRoute>} />
+        <Route path="/admin/create-teacher-room-preference/" element={<PrivateRoute><CreateTeacherRoomPreferencePage /></PrivateRoute>} />
         <Route path="/admin/create-timeslot" element={<PrivateRoute><CreateTimeSlotPage /></PrivateRoute>} />
         <Route path="/admin/create-building" element={<PrivateRoute><CreateBuildingPage /></PrivateRoute>} />
         <Route path="/admin/create-room" element={<PrivateRoute><CreateRoomPage /></PrivateRoute>} />

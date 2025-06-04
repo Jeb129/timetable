@@ -251,12 +251,6 @@ useEffect(() => {
                 cellToReset.scheduledLessonId = null;
                 cellToReset.lessonDetails = null;
                 cellToReset.isPlaceholder = true; // Помечаем как пустую
-
-                // Убедимся, что ID для Draggable/Droppable уникален и стабилен для пустой ячейки
-                // Если вы генерировали ID для пустых ячеек на основе дня и времени, восстановите его
-                // cellToReset.id = `cell-${dayName}-${timeIndex}-${isEvenWeek}-${originalTimeSlotId || 'no-ts-id'}`; // Пример
-                // Если ID ячейки (для Droppable) должен быть привязан к timeSlotId, то это уже есть
-                // А ID для Draggable теперь не будет, т.к. isPlaceholder=true
             }
             return newSchedule;
         });
@@ -271,9 +265,6 @@ useEffect(() => {
     } catch (err) {
         console.error("Ошибка при удалении ScheduledLesson:", err.response?.data || err.message || err);
         setError("Не удалось удалить занятие: " + (err.response?.data?.detail || JSON.stringify(err.response?.data) || err.message));
-        // Если произошла ошибка, можно попробовать перезагрузить данные, чтобы откатить оптимистичное обновление,
-        // но это может быть сложно, если локальное состояние уже сильно изменилось.
-        // Проще всего - сообщить об ошибке и позволить пользователю обновить страницу или попробовать снова.
         await fetchAndDisplaySchedule(); // Попытка синхронизировать с сервером в случае ошибки
     } finally {
         setIsLoadingLessons(false);
@@ -291,16 +282,22 @@ useEffect(() => {
         
         const lessonResponse = await axios.post('http://localhost:8000/api/create/lesson/', 
             lessonPayload,
-            { headers: { 'Authorization': `Bearer ${token}` } } // Content-Type application/json axios ставит по умолчанию для объектов
+            { headers: { 'Authorization': `Bearer ${token}` } }
         );
         const newLessonId = lessonResponse.data.id;
 
-        const scheduledLessonPayload = {
-            lesson: newLessonId,
-            time_slot: modalTargetCell.timeSlotId
-        };
-        await axios.post(`http://localhost:8000/api/createScheduledLesson/${newLessonId}/${modalTargetCell.timeSlotId}/`, 
-            { headers: { 'Authorization': `Bearer ${token}` } }
+        // const scheduledLessonPayload = {
+        //     lesson: newLessonId,
+        //     time_slot: modalTargetCell.timeSlotId
+        // };
+        // await axios.post('http://localhost:8000/api/create/scheduledlesson/', 
+        //     scheduledLessonPayload,
+        //     { headers: { 'Authorization': `Bearer ${token}` } }
+        // );
+        const scheduleresp = await axios.post(`http://localhost:8000/api/scheduledlesson/${newLessonId}/${modalTargetCell.timeSlotId}/`, 
+        {
+            headers: { 'Authorization': `Bearer ${token}` }
+        }
         );
         
         setIsModalOpen(false); 
