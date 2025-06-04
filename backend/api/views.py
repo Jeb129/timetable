@@ -53,45 +53,52 @@ def create_object(request, model_name):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
-@authentication_classes([JWTAuthentication])
-@permission_classes([IsAuthenticated]) # Решите, какие права нужны
 def get_schedule_for_group(request, group_id):
+    logger.info(f"Запрос расписания для группы ID: {group_id}, параметры: {request.query_params}")
     week_is_even_str = request.query_params.get('week_is_even', None)
+    
     if week_is_even_str is None:
+        logger.warning("Параметр 'week_is_even' отсутствует")
         return Response({"error": "Параметр 'week_is_even' (true/false) обязателен"}, status=status.HTTP_400_BAD_REQUEST)
     
     is_even = week_is_even_str.lower() == 'true'
+    logger.info(f"Фильтр недели: is_even_week={is_even}")
 
     try:
-        # Находим все TimeSlot для указанной недели
         time_slots_for_week = TimeSlot.objects.filter(is_even_week=is_even)
-        
-        scheduled_lessons = ScheduledLesson.objects.filter(
+        logger.info(f"Найдено таймслотов для недели: {time_slots_for_week.count()}")
+        if not time_slots_for_week.exists():
+             logger.info("Таймслоты для данной недели не найдены, будет возвращен пустой список уроков.")
+             return Response([], status=status.HTTP_200_OK) # Если нет таймслотов, то и уроков не будет
+
+        scheduled_lessons_qs = ScheduledLesson.objects.filter(
             lesson__groups__id=group_id, 
             time_slot__in=time_slots_for_week 
         ).select_related( 
-            'lesson__curriculum__discipline', 
-            'lesson__curriculum__teacher',
-            'lesson__curriculum__lesson_type', # Добавлено для lesson_type_name
-            'lesson__room__building', # Добавлено для building_code в RoomShortSerializer
+            'lesson__discipline', 
+            'lesson__teacher',    
+            'lesson__lesson_type',
+            'lesson__room__building', 
             'time_slot__weekday',
-            'time_slot__pair__building' # Если PairSerializer или TimeSlotForScheduledSerializer этого требуют
+            'time_slot__pair', # Убрал __building, т.к. PairSerializer полный
+            # 'time_slot__pair__building' # Если PairSerializer тоже вложенный и использует это
         ).prefetch_related(
-            'lesson__groups' # Если нужно что-то из групп в LessonForScheduledSerializer
-        ) 
-        # select_related и prefetch_related здесь для оптимизации, 
-        # чтобы уменьшить количество запросов к БД при сериализации вложенных объектов.
-        # Их нужно настроить в соответствии с тем, какие поля вы реально используете
-        # в DetailedScheduledLessonSerializer и его вложенных сериализаторах.
+            'lesson__groups' 
+        )
         
-        serializer = DetailedScheduledLessonSerializer(scheduled_lessons, many=True)
-        return Response(serializer.data)
-    # Убрал StudentGroup.DoesNotExist, так как мы не делаем get по group_id для StudentGroup напрямую здесь,
-    # а фильтруем ScheduledLesson. Если группа не существует, scheduled_lessons будет пустым.
+        logger.info(f"Найдено ScheduledLessons (до сериализации): {scheduled_lessons_qs.count()}")
+        # Для отладки можно вывести несколько объектов
+        # for sl_debug in scheduled_lessons_qs[:2]:
+        #     logger.debug(f"Отладочный SL: lesson_id={sl_debug.lesson_id}, timeslot_id={sl_debug.time_slot_id}")
+
+        serializer = DetailedScheduledLessonSerializer(scheduled_lessons_qs, many=True)
+        response_data = serializer.data # Получаем данные до Response
+        logger.info(f"Данные после сериализации (первые 2, если есть): {response_data[:2]}")
+        return Response(response_data)
+
     except Exception as e:
-        # Используем настроенный логгер
-        logger.error(f"Error in get_schedule_for_group for group {group_id}, week_is_even={is_even}: {e}", exc_info=True) 
-        return Response({"error": "Внутренняя ошибка сервера при получении расписания"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        logger.error(f"КРИТИЧЕСКАЯ ОШИБКА в get_schedule_for_group для группы {group_id}, week_is_even={is_even}: {e}")
+        return Response({"error": "Внутренняя ошибка сервера при получении расписания. См. логи сервера."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['GET'])

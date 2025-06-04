@@ -19,6 +19,7 @@ import CreateCurriculumPage from './pages/CreateCurriculumPage.jsx';
 import CreateEducationDirectionPage from './pages/CreateEducationDirectionPage';
 import CreateEducationFormPage from './pages/CreateEducationFormPage';
 import CreateEducationLevelPage from './pages/CreateEducationLevelPage';
+import InitializeTimeSlotsPage from './pages/InitializeTimeSlotsPage'; 
 
 
 function App() {
@@ -44,6 +45,14 @@ function App() {
         <Route  path="/admin/create-educationdirection" element={<PrivateRoute><CreateEducationDirectionPage /></PrivateRoute>}  />
         <Route  path="/admin/create-educationform" element={<PrivateRoute><CreateEducationFormPage /></PrivateRoute>}  />
         <Route  path="/admin/create-educationlevel" element={<PrivateRoute><CreateEducationLevelPage /></PrivateRoute>}  />
+         <Route 
+          path="/admin/initialize-timeslots" // Выберите путь, например, такой
+          element={
+            <PrivateRoute> {/* Защищаем, чтобы только админ мог это делать */}
+              <InitializeTimeSlotsPage />
+            </PrivateRoute>
+          } 
+        />
       </Routes>
     </Router>
   );

@@ -1,34 +1,54 @@
 // src/components/Schedule/ScheduleGrid.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
+import CreateLessonModal from '../CreateLessonModal'; // <--- УБЕДИТЕСЬ, ЧТО ЭТОТ ПУТЬ ПРАВИЛЬНЫЙ!
 import './ScheduleGrid.css'; 
 
 const times = ['08:30', '10:10', '11:50', '14:00', '15:40', '17:20'];
 const days = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
 
-// --- Вспомогательные функции (findTimeSlotId, generateEmptyScheduleStructure, transformFetchedDataToSchedule) ---
-// Оставляем их такими же, как в вашем последнем коде, они выглядят хорошо.
-// Убедитесь, что findTimeSlotId корректно работает с вашими данными allTimeSlots.
+// --- Вспомогательные функции ---
 const findTimeSlotId = (dayName, timeValue, isEvenWeek, allTimeSlotsFromServer) => {
-    if (!allTimeSlotsFromServer || allTimeSlotsFromServer.length === 0) return null;
-    const slot = allTimeSlotsFromServer.find(ts => 
-        ts.weekday_details?.name === dayName && 
-        ts.pair_details?.start_time?.startsWith(timeValue) &&
-        ts.is_even_week === isEvenWeek
-    );
+    if (!allTimeSlotsFromServer || allTimeSlotsFromServer.length === 0) {
+        // console.log(`findTimeSlotId: allTimeSlotsFromServer пуст для ${dayName} ${timeValue} ${isEvenWeek}`);
+        return null;
+    }
+    // Логируем только для одной конкретной ячейки, чтобы не засорять консоль
+    if (dayName === "Понедельник" && timeValue === "08:30") {
+        console.log(`findTimeSlotId ИЩЕМ для: day=${dayName}, time=${timeValue}, isEven=${isEvenWeek}`);
+    }
+
+    const slot = allTimeSlotsFromServer.find(ts => {
+        const dayMatch = ts.weekday_details?.name === dayName;
+        const timeMatch = ts.pair_details?.start_time?.startsWith(timeValue);
+        const weekMatch = ts.is_even_week === isEvenWeek;
+        
+        if (dayName === "Понедельник" && timeValue === "08:30") { // Логируем только для одной ячейки
+            console.log(`  Сравниваем с TimeSlot ID ${ts.id}: `+
+                        `wd='${ts.weekday_details?.name}' (match:${dayMatch}), `+
+                        `pair='${ts.pair_details?.start_time}' (match:${timeMatch}), `+
+                        `isEven=${ts.is_even_week} (match:${weekMatch})`);
+        }
+        return dayMatch && timeMatch && weekMatch;
+    });
+
+    if (dayName === "Понедельник" && timeValue === "08:30") {
+        console.log(`findTimeSlotId РЕЗУЛЬТАТ для ${dayName} ${timeValue} ${isEvenWeek}:`, slot ? slot.id : null);
+    }
     return slot ? slot.id : null; 
 };
 
-const generateEmptyScheduleStructure = (isEvenWeekForGrid, loadedTimeSlots) => {
+const generateBaseScheduleStructure = (isEvenWeekForGrid, loadedTimeSlots = []) => {
   return days.reduce((acc, day) => {
     acc[day] = times.map((time, timeIndex) => {
       const timeSlotId = findTimeSlotId(day, time, isEvenWeekForGrid, loadedTimeSlots);
       return {
-        id: `cell-${day}-${timeIndex}-${isEvenWeekForGrid}-${timeSlotId || 'no-ts'}`, 
+        id: `cell-${day}-${timeIndex}-${isEvenWeekForGrid}-${timeSlotId || 'no-ts-id'}`, 
         time,
         lesson: '', 
         scheduledLessonId: null,
         lessonId: null,          
+        lessonDetails: null, // Для хранения полного объекта урока с деталями
         timeSlotId: timeSlotId, 
       };
     });
@@ -36,43 +56,65 @@ const generateEmptyScheduleStructure = (isEvenWeekForGrid, loadedTimeSlots) => {
   }, {});
 };
 
-const transformFetchedDataToSchedule = (scheduledLessonsFromServer, baseGridStructure) => {
+const mapApiDataToGrid = (scheduledLessonsFromServer, baseGridStructure) => {
     const newGridData = JSON.parse(JSON.stringify(baseGridStructure)); 
 
     if (!Array.isArray(scheduledLessonsFromServer)) {
-        console.error("transformFetchedDataToSchedule: fetchedScheduledLessons is not an array", scheduledLessonsFromServer);
+        console.error("mapApiDataToGrid: данные с сервера не являются массивом", scheduledLessonsFromServer);
         return newGridData;
     }
 
     scheduledLessonsFromServer.forEach(sl => {
-        if (!sl.lesson?.curriculum?.discipline || 
+        // ОБНОВЛЕННАЯ ПРОВЕРКА для новой структуры Lesson
+        if (!sl.lesson || // Проверяем, что объект lesson вообще есть
+            !sl.lesson.discipline || // Проверяем наличие discipline напрямую в lesson
+            !sl.lesson.teacher ||    // Проверяем наличие teacher напрямую в lesson
+            !sl.lesson.lesson_type ||// Проверяем наличие lesson_type напрямую в lesson
+            !sl.lesson.room ||       // Проверяем наличие room напрямую в lesson
             !sl.time_slot?.weekday_details || 
             !sl.time_slot?.pair_details) {
+            console.warn("mapApiDataToGrid: Пропущен ScheduledLesson из-за неполных данных (проверьте структуру Lesson и TimeSlot):", sl);
             return; 
         }
+
         const dayName = sl.time_slot.weekday_details.name;
         const pairStartTime = sl.time_slot.pair_details.start_time?.substring(0, 5);
-        if (!dayName || !pairStartTime) return;
+
+        if (!dayName || !pairStartTime) {
+            console.warn("mapApiDataToGrid: Не удалось определить день или время для ScheduledLesson (API):", sl);
+            return;
+        }
 
         const dayInGrid = days.find(d => d === dayName);
         const timeIndex = times.indexOf(pairStartTime);
 
         if (dayInGrid && timeIndex !== -1) {
-            // Формируем текстовое представление урока. Адаптируйте под свои нужды.
-            let lessonText = sl.lesson.curriculum.discipline.name;
-            if (sl.lesson.curriculum.teacher) lessonText += ` (${sl.lesson.curriculum.teacher.full_name})`;
-            if (sl.lesson.room) lessonText += ` а.${sl.lesson.room.number}`;
-            if (sl.lesson.curriculum.lesson_type_name) lessonText += ` (${sl.lesson.curriculum.lesson_type_name})`;
-            // Если у Lesson есть поле title/description для простого текста, используйте его:
-            // lessonText = sl.lesson.title || lessonText;
+            // ОБНОВЛЕННОЕ ФОРМИРОВАНИЕ ТЕКСТА УРОКА
+            let lessonText = sl.lesson.discipline.name; 
+            if (sl.lesson.teacher) lessonText += ` (${sl.lesson.teacher.full_name})`;
+            else lessonText += ` (Преп. Н/У)`; // Если преподаватель может быть null
+
+            if (sl.lesson.room) lessonText += ` а.${sl.lesson.room.number}`; // room.number и room.building_code из RoomShortSerializer
+            else lessonText += ` (Ауд. Н/У)`;
+
+            if (sl.lesson.lesson_type) lessonText += ` (${sl.lesson.lesson_type.name})`;
+            else lessonText += ` (Тип Н/У)`;
             
             if (newGridData[dayName] && newGridData[dayName][timeIndex]) {
                 newGridData[dayName][timeIndex].lesson = lessonText;
                 newGridData[dayName][timeIndex].id = `sl-${sl.id}`; 
                 newGridData[dayName][timeIndex].scheduledLessonId = sl.id;
                 newGridData[dayName][timeIndex].lessonId = sl.lesson.id;
-                newGridData[dayName][timeIndex].timeSlotId = sl.time_slot.id;
+                newGridData[dayName][timeIndex].lessonDetails = sl.lesson; 
+                newGridData[dayName][timeIndex].timeSlotId = sl.time_slot.id; 
+            } else {
+                 console.warn(`mapApiDataToGrid: Ячейка [${dayName}][${timeIndex}] не найдена в структуре newGridData.`);
             }
+        } else {
+            console.warn(
+                "mapApiDataToGrid: Не удалось сопоставить ScheduledLesson с ячейкой (локально):", 
+                { dayName, isDayInGrid: !!dayInGrid, pairStartTime, timeIndex, lessonDetails: sl }
+            );
         }
     });
     return newGridData;
@@ -82,13 +124,15 @@ const transformFetchedDataToSchedule = (scheduledLessonsFromServer, baseGridStru
 
 function ScheduleGrid({ editable = false, filterId = null, initialIsEvenWeek = true }) {
   const [isEvenWeek, setIsEvenWeek] = useState(initialIsEvenWeek);
-  const [allTimeSlots, setAllTimeSlots] = useState([]);
-  const [baseScheduleStructure, setBaseScheduleStructure] = useState(null);
-  const [scheduleData, setScheduleData] = useState(null); 
+  const [allTimeSlots, setAllTimeSlots] = useState([]); 
+  const [scheduleData, setScheduleData] = useState(null); // Начинаем с null, чтобы показать начальную загрузку
   
   const [isLoadingTimeSlots, setIsLoadingTimeSlots] = useState(true);
-  const [isLoadingSchedule, setIsLoadingSchedule] = useState(false);
+  const [isLoadingLessons, setIsLoadingLessons] = useState(false); 
   const [error, setError] = useState(null);
+  
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalTargetCell, setModalTargetCell] = useState(null); // { dayName, timeIndex, timeSlotId }
   
   const token = localStorage.getItem('accessToken'); 
 
@@ -96,303 +140,270 @@ function ScheduleGrid({ editable = false, filterId = null, initialIsEvenWeek = t
 
   // 1. Загрузка всех таймслотов
   useEffect(() => {
-    if (!token) { setError("Токен не найден (для таймслотов)."); setIsLoadingTimeSlots(false); setAllTimeSlots([]); return; }
+    if (!token) { setError("Токен не найден. Невозможно загрузить конфигурацию сетки."); setIsLoadingTimeSlots(false); return; }
+    
     setIsLoadingTimeSlots(true); setError(null);
     axios.get('http://localhost:8000/api/list/timeslot/', { headers: { 'Authorization': `Bearer ${token}` } })
-    .then(response => { setAllTimeSlots(response.data || []); })
-    .catch(err => { console.error("SG: Ошибка загрузки таймслотов:", err); setError("Не удалось загрузить таймслоты."); setAllTimeSlots([]); })
+    .then(response => { 
+      const loadedSlots = response.data || [];
+        console.log("ScheduleGrid: ЗАГРУЖЕННЫЕ allTimeSlots (ПЕРВЫЕ 5):", loadedSlots.slice(0, 5)); 
+        setAllTimeSlots(response.data || []); 
+    })
+    .catch(err => { 
+        console.error("SG: Ошибка загрузки таймслотов:", err); 
+        setError("Не удалось загрузить таймслоты. Расписание не может быть отображено."); 
+        setAllTimeSlots([]); 
+    })
     .finally(() => { setIsLoadingTimeSlots(false); });
   }, [token]);
 
-  // 2. Создание базовой структуры сетки
-  useEffect(() => {
-    if (!isLoadingTimeSlots) {
-        const newBase = generateEmptyScheduleStructure(isEvenWeek, allTimeSlots);
-        setBaseScheduleStructure(newBase);
-        if (!filterId) setScheduleData(newBase); // Показать пустую структуру, если нет фильтра
+  // 2. Функция для загрузки и установки уроков расписания
+  const fetchAndDisplaySchedule = useCallback(() => {
+    console.log(`Вызов fetchAndDisplaySchedule. isLoadingTimeSlots: ${isLoadingTimeSlots}, filterId: ${filterId}, isEvenWeek: ${isEvenWeek}, allTimeSlots.length: ${allTimeSlots.length}`);
+
+    if (isLoadingTimeSlots) {
+        console.log("fetchAndDisplaySchedule: Ожидание загрузки таймслотов...");
+        // Не устанавливаем scheduleData в null, ждем пока таймслоты загрузятся
+        // и baseStructure будет готова в следующем useEffect
+        return; 
     }
-  }, [isEvenWeek, allTimeSlots, isLoadingTimeSlots, filterId]);
 
+    // Таймслоты загружены (или ошибка загрузки), создаем базовую структуру
+    const baseStructure = generateBaseScheduleStructure(isEvenWeek, allTimeSlots);
 
-  // Функция для принудительной перезагрузки данных расписания
-  const fetchScheduleData = useCallback(() => {
-    if (!filterId || !token || isLoadingTimeSlots || !baseScheduleStructure) {
-        if (baseScheduleStructure && !filterId) setScheduleData(baseScheduleStructure);
-        setIsLoadingSchedule(false);
+    if (!filterId || !token) { // Если нет ID группы или токена, показываем пустую базовую структуру
+        setScheduleData(baseStructure);
+        setIsLoadingLessons(false); // Убедимся, что загрузка уроков не активна
+        setError(null); 
         return;
     }
-    setIsLoadingSchedule(true); setError(null);
+    
+    setIsLoadingLessons(true); setError(null);
     axios.get(`http://localhost:8000/api/schedule/group/${filterId}/?week_is_even=${isEvenWeek}`, {
         headers: { 'Authorization': `Bearer ${token}` }
     })
     .then(response => {
-        const newFilledSchedule = transformFetchedDataToSchedule(response.data, baseScheduleStructure);
+      console.log("ScheduleGrid: ДАННЫЕ РАСПИСАНИЯ ПОЛУЧЕНЫ ПОСЛЕ СОЗДАНИЯ:", response.data); // <--- ВАЖНЫЙ ЛОГ
+       const fetchedScheduledLessons = response.data;
+        const newFilledSchedule = mapApiDataToGrid(response.data, baseStructure);
         setScheduleData(newFilledSchedule);
     })
     .catch(err => {
-        console.error("SG: Ошибка загрузки расписания:", err);
+        console.error("SG: Ошибка загрузки уроков:", err);
         setError(`Не удалось загрузить расписание для группы ${filterId}.`);
-        if (baseScheduleStructure) setScheduleData(baseScheduleStructure);
+        setScheduleData(baseStructure); // Показываем базовую структуру при ошибке
     })
-    .finally(() => setIsLoadingSchedule(false));
-  }, [filterId, isEvenWeek, token, baseScheduleStructure, isLoadingTimeSlots]); // Добавили baseScheduleStructure
+    .finally(() => setIsLoadingLessons(false));
+  }, [filterId, isEvenWeek, token, isLoadingTimeSlots, allTimeSlots]); // Зависимости
 
-  // 3. Загрузка данных расписания (ScheduledLessons) при изменении зависимостей
+  // Вызов загрузки расписания при изменении ключевых параметров
   useEffect(() => {
-    fetchScheduleData();
-  }, [fetchScheduleData]); // fetchScheduleData обернута в useCallback
+    fetchAndDisplaySchedule();
+  }, [fetchAndDisplaySchedule]);
 
+useEffect(() => {
+    if (scheduleData) {
+        console.log("ScheduleGrid: ОБНОВЛЕННЫЙ scheduleData (например, Понедельник 08:30):", 
+            scheduleData['Понедельник'] ? scheduleData['Понедельник'][0] : "Нет данных для Понедельника");
+    }
+}, [scheduleData]);
 
   const handleWeekToggle = () => { setIsEvenWeek(prev => !prev); };
 
-  const handleLessonChange = useCallback(async (day, timeIndex, newLessonText) => {
-    if (!editable || !scheduleData) return; // Добавил !scheduleData
+  const openCreateLessonModal = (dayName, timeIndex) => {
+    console.log(`openCreateLessonModal вызван для: [${dayName}][${timeIndex}]`); // Какой timeIndex?
+    if (!editable) { console.log("Не редактируемый режим"); return; }
+    if (!scheduleData) { console.log("scheduleData еще не готов"); return; }
     
-    const cellData = scheduleData[day]?.[timeIndex];2`1 `
-    if (!cellData) {
-        console.error("Cell data not found for lesson change", day, timeIndex);
-        return;
+    const cellData = scheduleData[dayName]?.[timeIndex];
+    console.log("Данные ячейки для модального окна (cellData):", cellData); // <--- САМЫЙ ВАЖНЫЙ ЛОГ
+
+    if (cellData && cellData.timeSlotId && !cellData.scheduledLessonId) {
+        console.log("Условия для открытия модального окна ВЫПОЛНЕНЫ. TimeSlotId:", cellData.timeSlotId);
+        setModalTargetCell({ dayName, timeIndex, timeSlotId: cellData.timeSlotId });
+        setIsModalOpen(true);
+    } // ... остальные else if ...
+};
+
+  const handleCreateLessonSubmit = async (lessonFormDataFromModal) => {
+    if (!modalTargetCell || !modalTargetCell.timeSlotId || !filterId || !token) {
+        setError("Ошибка: недостаточно данных для создания урока.");
+        setIsModalOpen(false); return;
     }
-
-    const trimmedText = newLessonText.trim();
-
-    // Оптимистичное обновление UI
-    const oldLessonText = cellData.lesson;
-    setScheduleData(prev => {
-        const newSchedule = JSON.parse(JSON.stringify(prev));
-        newSchedule[day][timeIndex].lesson = trimmedText;
-        return newSchedule;
-    });
-
+    setIsLoadingLessons(true); setError(null); // Показываем индикатор на время сохранения
     try {
-        if (trimmedText === "" && cellData.scheduledLessonId) {
-            // Удаление ScheduledLesson
-            await axios.delete(`http://localhost:8000/api/delete/scheduledlesson/${cellData.scheduledLessonId}/`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            // Очищаем данные в ячейке (кроме ID ячейки и timeSlotId)
-            setScheduleData(prev => {
-                const newSchedule = JSON.parse(JSON.stringify(prev));
-                newSchedule[day][timeIndex].lesson = '';
-                newSchedule[day][timeIndex].scheduledLessonId = null;
-                newSchedule[day][timeIndex].lessonId = null;
-                // ID самой ячейки (newSchedule[day][timeIndex].id) не меняем, он привязан к позиции
-                return newSchedule;
-            });
-            // Можно опционально удалить Lesson, если он больше не используется
-            // await axios.delete(`/api/delete/lesson/${cellData.lessonId}/`, { headers });
-             console.log("ScheduledLesson deleted");
+        const lessonPayload = { ...lessonFormDataFromModal };
+        
+        const lessonResponse = await axios.post('http://localhost:8000/api/create/lesson/', 
+            lessonPayload,
+            { headers: { 'Authorization': `Bearer ${token}` } } // Content-Type application/json axios ставит по умолчанию для объектов
+        );
+        const newLessonId = lessonResponse.data.id;
 
-        } else if (trimmedText !== "" && cellData.scheduledLessonId && cellData.lessonId) {
-            // Обновление существующего Lesson (только его текстового поля, например 'title')
-            // Убедитесь, что модель Lesson имеет поле 'title' или 'description'
-            await axios.put(`http://localhost:8000/api/update/lesson/${cellData.lessonId}/`, 
-                { title: trimmedText }, // Отправляем только обновляемое поле
-                { headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } }
-            );
-            console.log("Lesson updated");
+        const scheduledLessonPayload = {
+            lesson: newLessonId,
+            time_slot: modalTargetCell.timeSlotId
+        };
+        await axios.post('http://localhost:8000/api/create/scheduledlesson/', 
+            scheduledLessonPayload,
+            { headers: { 'Authorization': `Bearer ${token}` } }
+        );
+        
+        setIsModalOpen(false); 
+        setModalTargetCell(null);
+        
+        // Вызываем fetchScheduleLessons (или как вы назвали вашу функцию загрузки)
+        // Эта функция асинхронная, дождемся ее завершения
+        await fetchAndDisplaySchedule(); // <--- УБЕДИТЕСЬ, ЧТО ЭТА ФУНКЦИЯ ВОЗВРАЩАЕТ ПРОМИС ИЛИ ИСПОЛЬЗУЕТСЯ await
+                                      // ИЛИ если она просто меняет состояние, то React сам перерисует
+                                      // Если fetchAndDisplaySchedule не async, то await не нужен, 
+                                      // но нужно дождаться обновления состояния.
+                                      // Проще всего, если fetchAndDisplaySchedule возвращает промис.
 
-        } else if (trimmedText !== "" && !cellData.scheduledLessonId) {
-            // Создание нового Lesson и ScheduledLesson
-            if (!cellData.timeSlotId) {
-                setError("Невозможно создать занятие: не определен временной слот для ячейки.");
-                // Возвращаем старый текст, если был
-                setScheduleData(prev => { const n = JSON.parse(JSON.stringify(prev)); n[day][timeIndex].lesson = oldLessonText; return n;});
-                return;
-            }
+        // Уведомление для пользователя (можно использовать более продвинутое)
+        console.log("Занятие успешно создано и добавлено в расписание!");
+        // setError(null); // Очищаем предыдущие ошибки
+        // setSuccess("Занятие успешно создано!"); // Если есть состояние для успеха
 
-            // 1. Создаем Lesson
-            const lessonResponse = await axios.post('http://localhost:8000/api/create/lesson/', 
-                { title: trimmedText, groups: [filterId] }, // Предполагаем поле title и groups у Lesson
-                { headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } }
-            );
-            const newLessonId = lessonResponse.data.id;
-
-            // 2. Создаем ScheduledLesson
-            const scheduledLessonResponse = await axios.post('http://localhost:8000/api/create/scheduledlesson/', 
-                { lesson: newLessonId, time_slot: cellData.timeSlotId },
-                { headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } }
-            );
-            const newScheduledLessonId = scheduledLessonResponse.data.id;
-
-            // Обновляем ID в состоянии
-            setScheduleData(prev => {
-                const newSchedule = JSON.parse(JSON.stringify(prev));
-                newSchedule[day][timeIndex].lessonId = newLessonId;
-                newSchedule[day][timeIndex].scheduledLessonId = newScheduledLessonId;
-                newSchedule[day][timeIndex].id = `sl-${newScheduledLessonId}`; // Обновляем ID Draggable
-                return newSchedule;
-            });
-            console.log("New Lesson and ScheduledLesson created");
-        }
-        // После успешной операции можно перезагрузить все расписание для консистентности,
-        // но это может сбросить фокус с инпута. Оптимистичное обновление обычно лучше.
-        // fetchScheduleData(); // Раскомментируйте, если хотите полную перезагрузку
     } catch (err) {
-        console.error("Ошибка при сохранении урока:", err.response?.data || err.message || err);
-        setError("Не удалось сохранить изменения урока.");
-        // Откатываем UI к предыдущему состоянию
-        setScheduleData(prev => {
-            const newSchedule = JSON.parse(JSON.stringify(prev));
-            newSchedule[day][timeIndex].lesson = oldLessonText; // Возвращаем старый текст
-            // Если это было создание, нужно откатить и ID
-            if (!cellData.scheduledLessonId && trimmedText !== "") { // Если пытались создать
-                 newSchedule[day][timeIndex].lessonId = null;
-                 newSchedule[day][timeIndex].scheduledLessonId = null;
-                 newSchedule[day][timeIndex].id = `cell-${day}-${timeIndex}-${isEvenWeek}-${cellData.timeSlotId || 'no-ts'}`;
-            }
-            return newSchedule;
-        });
+        console.error("Ошибка при создании урока:", err.response?.data || err.message || err);
+        setError("Не удалось создать урок: " + (err.response?.data?.detail || JSON.stringify(err.response?.data) || err.message));
+        // Оставляем модальное окно открытым при ошибке, чтобы пользователь мог видеть ошибку
+    } finally {
+        setIsLoadingLessons(false); // Убираем индикатор
     }
-  }, [editable, scheduleData, token, filterId, isEvenWeek, setScheduleData, setError, fetchScheduleData]); // Добавил fetchScheduleData
+  };
+  
+  // Заглушка для редактирования текста (пока не используется активно)
+  const handleLessonTextEdit = (day, timeIndex, newText) => {
+      if(!editable) return;
+      console.log("Редактирование текста (не сохраняется):", day, timeIndex, newText);
+      // Можно добавить оптимистичное обновление, если нужно
+  };
 
   const handleMoveLesson = useCallback(async (sourceDayName, sourceTimeIndex, direction) => {
     if (!editable || !scheduleData) return;
-
     const sourceCell = scheduleData[sourceDayName]?.[sourceTimeIndex];
-    if (!sourceCell || !sourceCell.scheduledLessonId || !sourceCell.timeSlotId) {
-        // console.log("Нечего перемещать из исходной ячейки.");
-        return;
-    }
+    if (!sourceCell || !sourceCell.scheduledLessonId || !sourceCell.timeSlotId) return;
 
+    // ... (логика определения targetDayName, targetTimeIndex) ...
     let targetDayIndex = days.indexOf(sourceDayName);
     let targetTimeIndex = sourceTimeIndex;
-
     if (direction === 'up') targetTimeIndex--;
     else if (direction === 'down') targetTimeIndex++;
     else if (direction === 'left') targetDayIndex--;
     else if (direction === 'right') targetDayIndex++;
-
-    // Проверка границ
-    if (targetTimeIndex < 0 || targetTimeIndex >= times.length || targetDayIndex < 0 || targetDayIndex >= days.length) {
-        // console.log("Выход за границы сетки.");
-        return;
-    }
-
+    if (targetTimeIndex < 0 || targetTimeIndex >= times.length || targetDayIndex < 0 || targetDayIndex >= days.length) return;
     const targetDayName = days[targetDayIndex];
+    // ...
+
     const targetCell = scheduleData[targetDayName]?.[targetTimeIndex];
+    if (!targetCell || !targetCell.timeSlotId) { alert("Целевая ячейка не имеет валидного временного слота."); return; }
 
-    if (!targetCell || !targetCell.timeSlotId) {
-        // console.log("Целевая ячейка не имеет TimeSlot ID.");
-        return;
-    }
+    const originalScheduleDataForRollback = JSON.parse(JSON.stringify(scheduleData));
+    setIsLoadingLessons(true); setError(null);
 
-    // Оптимистичное обновление UI
-    const originalScheduleData = JSON.parse(JSON.stringify(scheduleData)); // Сохраняем для отката
-
+    // Оптимистичное обновление UI (ваша логика обмена/перемещения)
     setScheduleData(prev => {
         const newSchedule = JSON.parse(JSON.stringify(prev));
-        const sourceData = { ...newSchedule[sourceDayName][sourceTimeIndex] }; // Копируем данные урока
-        const targetData = { ...newSchedule[targetDayName][targetTimeIndex] }; // Копируем данные целевой ячейки
-
-        if (targetData.scheduledLessonId) { // Если целевая ячейка занята (обмен)
-            // Обмен данными урока
-            newSchedule[targetDayName][targetTimeIndex].lesson = sourceData.lesson;
-            newSchedule[targetDayName][targetTimeIndex].lessonId = sourceData.lessonId;
-            newSchedule[targetDayName][targetTimeIndex].scheduledLessonId = sourceData.scheduledLessonId;
-            // ID для Draggable также обновляем
-            newSchedule[targetDayName][targetTimeIndex].id = sourceData.id;
-
-
-            newSchedule[sourceDayName][sourceTimeIndex].lesson = targetData.lesson;
-            newSchedule[sourceDayName][sourceTimeIndex].lessonId = targetData.lessonId;
-            newSchedule[sourceDayName][sourceTimeIndex].scheduledLessonId = targetData.scheduledLessonId;
-            newSchedule[sourceDayName][sourceTimeIndex].id = targetData.id;
-        } else { // Если целевая ячейка пуста (перемещение)
-            newSchedule[targetDayName][targetTimeIndex] = { ...sourceData }; // Копируем весь объект урока
-            // Очищаем исходную ячейку, сохраняя ее ID и timeSlotId
-            newSchedule[sourceDayName][sourceTimeIndex].lesson = '';
-            newSchedule[sourceDayName][sourceTimeIndex].lessonId = null;
-            newSchedule[sourceDayName][sourceTimeIndex].scheduledLessonId = null;
-            newSchedule[sourceDayName][sourceTimeIndex].id = `cell-${sourceDayName}-${sourceTimeIndex}-${isEvenWeek}-${sourceCell.timeSlotId || 'no-ts'}`;
-        }
+        // ... (код обмена/перемещения lesson, lessonId, scheduledLessonId, id между ячейками) ...
+        // Пример для простого перемещения в пустую ячейку:
+        if (!targetCell.scheduledLessonId) {
+            newSchedule[targetDayName][targetTimeIndex] = { ...sourceCell };
+            newSchedule[sourceDayName][sourceTimeIndex] = { 
+                ...generateEmptyScheduleStructure(isEvenWeek, [allTimeSlots.find(ts=>ts.id === sourceCell.timeSlotId)])[sourceDayName][sourceTimeIndex]
+            }; // Восстанавливаем пустую ячейку с ее timeSlotId
+        } else { /* TODO: логика обмена, если целевая занята */ }
         return newSchedule;
     });
 
     try {
         if (targetCell.scheduledLessonId) { // Обмен
-            // 1. Обновляем исходный урок -> на таймслот целевой ячейки
-            await axios.put(`http://localhost:8000/api/update/scheduledlesson/${sourceCell.scheduledLessonId}/`,
-                { time_slot: targetCell.timeSlotId },
-                { headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } }
-            );
-            // 2. Обновляем (бывший) целевой урок -> на таймслот исходной ячейки
-            await axios.put(`http://localhost:8000/api/update/scheduledlesson/${targetCell.scheduledLessonId}/`,
-                { time_slot: sourceCell.timeSlotId },
-                { headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } }
-            );
-        } else { // Перемещение в пустую ячейку
-            await axios.put(`http://localhost:8000/api/update/scheduledlesson/${sourceCell.scheduledLessonId}/`,
-                { time_slot: targetCell.timeSlotId },
-                { headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } }
-            );
+            await axios.put(`http://localhost:8000/api/update/scheduledlesson/${sourceCell.scheduledLessonId}/`, { time_slot: targetCell.timeSlotId }, { headers: { 'Authorization': `Bearer ${token}`}});
+            await axios.put(`http://localhost:8000/api/update/scheduledlesson/${targetCell.scheduledLessonId}/`, { time_slot: sourceCell.timeSlotId }, { headers: { 'Authorization': `Bearer ${token}`}});
+        } else { // Перемещение
+            await axios.put(`http://localhost:8000/api/update/scheduledlesson/${sourceCell.scheduledLessonId}/`, { time_slot: targetCell.timeSlotId }, { headers: { 'Authorization': `Bearer ${token}`}});
         }
-        // console.log("Lesson moved on server.");
-        fetchScheduleData(); // Перезагружаем данные для консистентности после успешного перемещения
+        fetchAndDisplaySchedule(); 
     } catch (err) {
-        console.error("Ошибка при перемещении урока:", err.response?.data || err.message || err);
-        setError("Не удалось переместить урок.");
-        setScheduleData(originalScheduleData); // Откатываем UI
+        console.error("Ошибка при перемещении урока:", err); setError("Не удалось переместить урок.");
+        setScheduleData(originalScheduleDataForRollback); 
+    } finally {
+        setIsLoadingLessons(false);
     }
+  }, [editable, scheduleData, token, isEvenWeek, allTimeSlots, fetchAndDisplaySchedule]);
 
-  }, [editable, scheduleData, token, filterId, isEvenWeek, allTimeSlots, setScheduleData, setError, fetchScheduleData]);
 
+  // --- Логика отображения ---
+  if (!token && !error) return <div className="schedule-error">Ошибка: Токен аутентификации не найден.</div>;
+  
+  // Показываем общий лоадер, пока грузятся таймслоты ИЛИ пока не установлен scheduleData (первичная инициализация)
+  if (isLoadingTimeSlots || (!scheduleData && !error) ) { 
+      return <div className="schedule-loading">Загрузка данных и конфигурации сетки...</div>;
+  }
+  
+  // Если была ошибка на этапе загрузки таймслотов и scheduleData не установился
+  if (error && !scheduleData) {
+      return <div className="schedule-error">Ошибка ScheduleGrid: {error}</div>;
+  }
 
-  // --- Логика отображения (оставляем как в вашем последнем коде) ---
-  if (!token && !error) { return <div className="schedule-error">Ошибка: Токен аутентификации не найден.</div>; }
-  if (isLoadingTimeSlots && !error) { return <div className="schedule-loading">Загрузка конфигурации временных слотов...</div>; }
-  if (error) {  return <div className="schedule-error">Ошибка ScheduleGrid: {error}</div>; }
-  if (filterId && isLoadingSchedule) { return <div className="schedule-loading">Обновление данных расписания...</div>; }
-  if (!scheduleData) { return <div className="schedule-loading">Инициализация сетки...</div>; }
-
-  const dataToRender = scheduleData;
+  // Если scheduleData есть (хотя бы базовая структура), но есть ошибка от загрузки уроков
+  if (error && scheduleData) {
+      // Можно отобразить ошибку над сеткой
+  }
+  
+  // Если scheduleData еще не успел заполниться после загрузки таймслотов (маловероятно, но для подстраховки)
+  if (!scheduleData) {
+      return <div className="schedule-loading">Инициализация сетки...</div>;
+  }
   
   return (
-    // ... ВАШ JSX ДЛЯ РЕНДЕРИНГА СЕТКИ ...
-    // Убедитесь, что key для input уникален и стабилен, чтобы избежать проблем с фокусом/состоянием input.
-    // Если вы используете defaultValue, то проблем с редактированием быть не должно.
-    // Важно: `onBlur={(e) => handleLessonChange(day, timeIndex, e.target.value)}` 
-    // Это означает, что `handleLessonChange` будет вызван КАЖДЫЙ РАЗ, когда input теряет фокус.
-    // Если пользователь просто кликнул в input и потом мимо, отправится запрос.
-    // Можно добавить проверку, изменился ли текст, прежде чем отправлять запрос.
-    // Или использовать отдельную кнопку "сохранить" для ячейки, или Enter.
-    // Пока оставим onBlur для простоты.
     <div className="schedule-grid-container">
+      {error && <div className="schedule-error encima-grid">{error}</div>} {/* Ошибка выводится над сеткой */}
       <div className="schedule-grid-week-toggle">
         <label className="schedule-grid-week-toggle-label">
           <input type="checkbox" checked={isEvenWeek} onChange={handleWeekToggle} className="schedule-grid-week-toggle-checkbox"/>
           {isEvenWeek ? 'Чётная неделя' : 'Нечётная неделя'}
         </label>
       </div>
+      {isLoadingLessons && <div className="schedule-loading-inline">Загрузка уроков...</div>}
+
       <div className="schedule-grid-table">
         <div className="schedule-grid-header-row">
           <div className="schedule-grid-cell schedule-grid-time-header-cell">Время</div>
           {days.map((day) => ( <div key={day} className="schedule-grid-cell schedule-grid-day-header-cell">{day}</div> ))}
         </div>
         {times.map((time, timeIndex) => (
-          <div key={`${time}-${isEvenWeek}-${filterId || 'no-filter'}`} className="schedule-grid-row"> {/* Добавил filterId в key */}
+          <div key={`${time}-${isEvenWeek}-${filterId || 'no-filter'}`} className="schedule-grid-row">
             <div className="schedule-grid-cell schedule-grid-time-header-cell">{time}</div>
             {days.map((day) => {
-              const lessonItem = dataToRender[day]?.[timeIndex] || 
-                                 { id: `fallback-${day}-${timeIndex}-${isEvenWeek}`, lesson: '', scheduledLessonId: null, timeSlotId: null };
+              const lessonItem = scheduleData[day]?.[timeIndex] || 
+                                 { id: `fallback-${day}-${timeIndex}-${isEvenWeek}`, lesson: '', scheduledLessonId: null, timeSlotId: null, lessonDetails: null };
+              const canAddLesson = editable && !lessonItem.scheduledLessonId && lessonItem.timeSlotId;
               return (
-                <div key={`${day}-${timeIndex}-${isEvenWeek}-cell-${filterId || 'no-filter'}`} className="schedule-grid-cell"> {/* Добавил filterId в key */}
+                <div 
+                    key={lessonItem.id} 
+                    className={`schedule-grid-cell ${canAddLesson ? 'editable-empty-cell' : ''}`}
+                    onClick={() => canAddLesson && openCreateLessonModal(day, timeIndex)}
+                    title={canAddLesson ? "Добавить занятие" : (lessonItem.lesson || "")}
+                >
                   <div className="schedule-lesson-content">
                     <input 
                       type="text" 
-                      key={`input-${lessonItem.id}`} // Используем ID урока/ячейки
+                      key={`input-${lessonItem.id}`} 
                       defaultValue={lessonItem.lesson} 
-                      onBlur={(e) => editable && handleLessonChange(day, timeIndex, e.target.value)} // Вызываем только если editable
-                      placeholder="-" 
+                      onBlur={(e) => editable && lessonItem.scheduledLessonId && handleLessonTextEdit(day, timeIndex, e.target.value)}
+                      placeholder={canAddLesson ? "+" : "-"} 
                       className="schedule-grid-lesson-input" 
                       disabled={!editable}
+                      readOnly={!lessonItem.scheduledLessonId || !editable} // Только для существующих уроков (если есть), или если не редактируемый режим
                     />
                     {editable && lessonItem.scheduledLessonId && (
                       <div className="lesson-move-buttons">
-                        <button onClick={() => handleMoveLesson(day, timeIndex, 'up')} className="move-btn" title="Вверх">↑</button>
-                        <button onClick={() => handleMoveLesson(day, timeIndex, 'down')} className="move-btn" title="Вниз">↓</button>
-                        <button onClick={() => handleMoveLesson(day, timeIndex, 'left')} className="move-btn" title="Влево">←</button>
-                        <button onClick={() => handleMoveLesson(day, timeIndex, 'right')} className="move-btn" title="Вправо">→</button>
+                        <button onClick={(e) => {e.stopPropagation(); handleMoveLesson(day, timeIndex, 'up')}} className="move-btn" title="Вверх">↑</button>
+                        <button onClick={(e) => {e.stopPropagation(); handleMoveLesson(day, timeIndex, 'down')}} className="move-btn" title="Вниз">↓</button>
+                        <button onClick={(e) => {e.stopPropagation(); handleMoveLesson(day, timeIndex, 'left')}} className="move-btn" title="Влево">←</button>
+                        <button onClick={(e) => {e.stopPropagation(); handleMoveLesson(day, timeIndex, 'right')}} className="move-btn" title="Вправо">→</button>
                       </div>
                     )}
                   </div>
@@ -402,6 +413,13 @@ function ScheduleGrid({ editable = false, filterId = null, initialIsEvenWeek = t
           </div>
         ))}
       </div>
+      <CreateLessonModal 
+        isOpen={isModalOpen}
+        onClose={() => { setIsModalOpen(false); setModalTargetCell(null); setError(''); }}
+        onSubmit={handleCreateLessonSubmit}
+        currentGroupId={filterId}
+        token={token}
+      />
     </div>
   );
 }

@@ -188,3 +188,16 @@
   background-color: #f0f0f0;
   border-color: #bbb;
 }
+/* ScheduleGrid.css */
+.schedule-grid-cell.editable-empty-cell {
+  cursor: pointer;
+  background-color: #f0f8ff; /* Легкий фон, чтобы показать, что ячейка кликабельна */
+}
+.schedule-grid-cell.editable-empty-cell:hover {
+  background-color: #e6f2ff;
+}
+.schedule-grid-lesson-input[placeholder="+"] {
+    text-align: center;
+    font-size: 1.5em;
+    color: #aaa;
+}

@@ -148,13 +148,17 @@ class CurriculumForLessonSerializer(serializers.ModelSerializer):
         fields = ['id', 'teacher', 'discipline', 'lesson_type_name']
 
 class LessonForScheduledSerializer(serializers.ModelSerializer):
-    curriculum = CurriculumForLessonSerializer(read_only=True)
-    room = RoomShortSerializer(read_only=True)
-    # Поле для простого текстового описания, если Lesson будет его иметь
-    # description = serializers.CharField(allow_blank=True, required=False, read_only=True)
+    # УБЕДИТЕСЬ, ЧТО ЭТИ СТРОКИ ЕСТЬ И РАСКОММЕНТИРОВАНЫ,
+    # И ЧТО DisciplineShortSerializer, TeacherShortSerializer, LessonTypeSerializer СУЩЕСТВУЮТ И РАБОТАЮТ
+    discipline = DisciplineShortSerializer(read_only=True) 
+    teacher = TeacherShortSerializer(read_only=True)    
+    lesson_type = LessonTypeSerializer(read_only=True) # Или LessonTypeShortSerializer
+    room = RoomShortSerializer(read_only=True)          
+    
     class Meta:
         model = Lesson
-        fields = ['id', 'curriculum', 'room'] # Добавьте 'description', если оно есть в модели Lesson
+        # УБЕДИТЕСЬ, ЧТО ВСЕ ЭТИ ПОЛЯ ПЕРЕЧИСЛЕНЫ ЗДЕСЬ
+        fields = ['id', 'discipline', 'teacher', 'lesson_type', 'room'] # Добавьте 'description', если оно есть в модели Lesson
 
 class TimeSlotForScheduledSerializer(serializers.ModelSerializer):
     weekday_details = WeekdaySerializer(source='weekday', read_only=True) # Переименовал для ясности
@@ -176,3 +180,30 @@ class DetailedScheduledLessonSerializer(serializers.ModelSerializer):
         model = ScheduledLesson
         fields = ['id', 'lesson', 'time_slot']
 
+class WeekdaySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Weekday
+        fields = ['id', 'number', 'name', 'short_name'] # Убедитесь, что все эти поля есть в модели Weekday
+
+class PairSerializer(serializers.ModelSerializer):
+    building_code = serializers.CharField(source='building.code', read_only=True, allow_null=True) # Добавим allow_null=True на случай если building может быть null
+    class Meta:
+        model = Pair
+        fields = ['id', 'number', 'building', 'start_time', 'end_time', 'building_code'] # 'building' - это ID
+
+# ... (остальные ваши базовые сериализаторы: LessonType, Building, и т.д.) ...
+
+# --- ИЗМЕНЕННЫЙ TimeSlotSerializer ---
+class TimeSlotSerializer(serializers.ModelSerializer):
+    weekday_details = WeekdaySerializer(source='weekday', read_only=True, allow_null=True) # Добавил allow_null=True
+    pair_details = PairSerializer(source='pair', read_only=True, allow_null=True)       # Добавил allow_null=True
+    
+    # Убрал write_only поля для простоты, т.к. create_object для timeslot скорее всего будет использовать 
+    # простой TimeSlotSerializer, который принимает ID для weekday и pair, или вы будете создавать их через админку.
+    # Если вы создаете TimeSlot через API и этот сериализатор, то write_only поля нужны.
+    # weekday = serializers.PrimaryKeyRelatedField(queryset=Weekday.objects.all(), write_only=True, source='weekday', required=False, allow_null=True)
+    # pair = serializers.PrimaryKeyRelatedField(queryset=Pair.objects.all(), write_only=True, source='pair', required=False, allow_null=True)
+
+    class Meta:
+        model = TimeSlot
+        fields = ['id', 'weekday_details', 'pair_details', 'is_even_week'] # Оставим только то, что нужно для чтения списка
