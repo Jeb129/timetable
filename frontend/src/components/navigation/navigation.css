@@ -1,0 +1,36 @@
+.nav-list {
+  display: flex;
+  flex-direction: column;
+  max-width: 200px;
+  height: 100vh;
+  background-color: #f5f5f5;
+  padding: 1rem;
+  gap: 5px;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+  overflow-y: auto; /* Прокрутка при переполнении */
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: #ccc transparent;
+}
+.nav-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.nav-list::-webkit-scrollbar-thumb {
+  background-color: #ccc;
+  border-radius: 4px;
+}
+.nav-button {
+  background-color: #bbb;
+  border: none;
+  padding: 10px 15px;
+  text-align: left;
+  font-size: 1rem;
+  color: #333;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.nav-button:hover {
+  background-color: #e0e0e0;
+}

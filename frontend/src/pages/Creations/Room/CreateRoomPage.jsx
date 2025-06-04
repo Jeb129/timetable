@@ -2,7 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import './Pages.css';
+import Navigation from '../../../components/navigation/navigation';
+import '../../Pages.css';
+import '../../../assets/form.css'
 
 function CreateRoomPage() {
     const [buildingId, setBuildingId] = useState('');
@@ -93,9 +95,27 @@ function CreateRoomPage() {
     };
 
     return (
-        <div className="admin-form-page-container">
-            <div className="admin-form-wrapper">
-                <div className="admin-form-header">
+        <div className="page-container">
+            <Navigation links={[
+                ['/create-user', 'Создание пользователя'],
+                ['/admin/create-building', 'Создание корпуса'],
+                ['/admin/create-room', 'Создание аудитории'],
+                ['/admin/create-institute', 'Создание института'],
+                ['/admin/create-teacher', 'Создание преподавателя'],
+                ['/admin/create-studentgroup', 'Создание группы'],
+                ['/admin/create-discipline', 'Создание дисциплины'],
+                ['/admin/create-lessontype', 'Создание типа занятия'],
+                ['/admin/create-pair', 'Создание пары'],
+                ['/admin/create-weekday', 'Создание дня недели'],
+                ['/admin/create-controltype', 'Создание формы контроля'],
+                ['/admin/create-equipment', 'Создание оборудования'],
+                ['/admin/create-curriculum', 'Создание учебного плана'],
+                ['/admin/create-educationdirection', 'Создание направления подготовки'],
+                ['/admin/create-educationform', 'Создание формы обучения'],
+                ['/admin/create-educationlevel', 'Создание уровня образования'],
+            ]} />
+            <div className="form-container">
+                <div className="form-header">
                 <h2>Добавление новой аудитории</h2>
                 <button onClick={handleGoBack} className="admin-form-back-button">
                         ← Назад 
@@ -136,7 +156,7 @@ function CreateRoomPage() {
                             ))}
                         </div>
                     </div>
-                    <button type="submit" className="admin-form-submit-button">Добавить аудиторию</button>
+                    <button type="submit" className="form-submit-button">Добавить аудиторию</button>
                 </form>
             </div>
         </div>

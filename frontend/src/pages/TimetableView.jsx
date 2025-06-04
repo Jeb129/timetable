@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react'; // Добавили useRef
 import { useNavigate } from 'react-router-dom';
 import ScheduleGrid from '../components/Schedule/ScheduleGrid';
+import Navigation from '../components/navigation/navigation';
 import './Pages.css';
 
 // --- МОКОВЫЕ ДАННЫЕ (позже будут с бэкенда) ---

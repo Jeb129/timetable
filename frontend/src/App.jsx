@@ -2,34 +2,42 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import TimetableView from './pages/TimetableView';
 import TimetableEditor from './pages/TimetableEditor';
 import LoginPage from './pages/LoginPage';
-import CreateUserPage from './pages/CreateUserPage';
 import PrivateRoute from './components/PrivateRoute';
-import CreateTeacherPage from './pages/CreateTeacherPage';
-import CreateStudentGroupPage from './pages/CreateStudentGroupPage';
-import CreateInstitutePage from './pages/CreateInstitutePage'; 
-import CreateBuildingPage from './pages/CreateBuildingPage';
-import CreateRoomPage from './pages/CreateRoomPage';
-import CreateDisciplinePage from './pages/CreateDisciplinePage';
-import CreateLessonTypePage from './pages/CreateLessonTypePage';
-import CreatePairPage from './pages/CreatePairPage';
-import CreateWeekdayPage from './pages/CreateWeekdayPage';
-import CreateControlTypePage from './pages/CreateControlTypePage';
-import CreateEquipmentPage from './pages/CreateEquipmentPage';
-import CreateCurriculumPage from './pages/CreateCurriculumPage.jsx';
-import CreateEducationDirectionPage from './pages/CreateEducationDirectionPage';
-import CreateEducationFormPage from './pages/CreateEducationFormPage';
-import CreateEducationLevelPage from './pages/CreateEducationLevelPage';
-import InitializeTimeSlotsPage from './pages/InitializeTimeSlotsPage'; 
+import Navigation from './components/navigation/navigation.jsx';
 
+import CreateDefaultPage from './pages/Creations/CreateDefault.jsx';
+import CreateBuildingPage from './pages/Creations/Building/CreateBuildingPage.jsx';
+import CreateControlTypePage from './pages/Creations/ControlType/CreateControlTypePage.jsx';
+import CreateCurriculumPage from './pages/Creations/Curriculum/CreateCurriculumPage.jsx';
+import CreateDisciplinePage from './pages/Creations/Discipline/CreateDisciplinePage.jsx';
+import CreateEducationDirectionPage from './pages/Creations/EducationDirection/CreateEducationDirectionPage.jsx';
+import CreateEducationFormPage from './pages/Creations/EducationForm/CreateEducationFormPage.jsx';
+import CreateEducationLevelPage from './pages/Creations/EducationLevel/CreateEducationLevelPage.jsx';
+import CreateEquipmentPage from './pages/Creations/Equipment/CreateEquipmentPage.jsx';
+import CreateInstitutePage from './pages/Creations/Institute/CreateInstitutePage.jsx';
+import CreateLessonTypePage from './pages/Creations/LessonType/CreateLessonTypePage.jsx';
+import CreatePairPage from './pages/Creations/Pair/CreatePairPage.jsx';
+import CreateRoomPage from './pages/Creations/Room/CreateRoomPage.jsx';
+import CreateStudentGroupPage from './pages/Creations/StudentGroup/CreateStudentGroupPage.jsx';
+import CreateTeacherPage from './pages/Creations/Teacher/CreateTeacherPage.jsx';
+import CreateUserPage from './pages/Creations/User/CreateUserPage.jsx';
+import CreateWeekdayPage from './pages/Creations/WeekDay/CreateWeekdayPage.jsx';
 
 function App() {
   return (
     <Router>
+      <Navigation links={[
+        ['/','Просмотр расписания'],
+        ['/login','Вход'],
+        ['/edit','Редактирование расписания'],
+        ['/dbcreate', 'Работа с БД']
+      ]} />
       <Routes>
         <Route path="/" element={<TimetableView />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/edit" element={<TimetableEditor />} />
+        <Route path="/edit" element={<PrivateRoute><TimetableEditor /></PrivateRoute>} />
         <Route path="/create-user" element={<PrivateRoute><CreateUserPage /></PrivateRoute>} />
+        <Route path="/dbcreate" element={<PrivateRoute><CreateDefaultPage /></PrivateRoute>} />
         <Route path="/admin/create-building" element={<PrivateRoute><CreateBuildingPage /></PrivateRoute>} />
         <Route path="/admin/create-room" element={<PrivateRoute><CreateRoomPage /></PrivateRoute>} />
         <Route  path="/admin/create-institute" element={ <PrivateRoute> <CreateInstitutePage /> </PrivateRoute>  }   />

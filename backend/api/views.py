@@ -9,6 +9,7 @@ import logging
 from .constraint_engine import ConstraintEngine
 from .models import *
 from .serializers import *
+from .pervissions import *
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +40,9 @@ MODEL_MAP = {
     'teacherroompreference': (TeacherRoomPreference, TeacherRoomPreferenceSerializer),
     'constraint': (Constraint, ConstraintSerializer),
 }
+
 @api_view(['POST'])
+@permission_classes([IsAdminUser])
 def create_object(request, model_name):
     model_info = MODEL_MAP.get(model_name.lower())
     if not model_info:
@@ -100,10 +103,7 @@ def get_schedule_for_group(request, group_id):
         logger.error(f"КРИТИЧЕСКАЯ ОШИБКА в get_schedule_for_group для группы {group_id}, week_is_even={is_even}: {e}")
         return Response({"error": "Внутренняя ошибка сервера при получении расписания. См. логи сервера."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
 @api_view(['GET'])
-# @authentication_classes([JWTAuthentication]) # Добавьте по необходимости
-# @permission_classes([permissions.IsAuthenticated]) # Например, все залогиненные могут смотреть списки
 def list_objects(request, model_name):
     model_info = MODEL_MAP.get(model_name.lower())
     if not model_info:
@@ -116,7 +116,7 @@ def list_objects(request, model_name):
     return Response(serializer.data)
 
 @api_view(['GET'])
-def get_object(request, object_name, object_id):
+def get_object_by_id(request, object_name, object_id):
     object_info = MODEL_MAP.get(object_name)
     if not object_info:
         return Response({"error": "Unknown model"}, status=status.HTTP_400_BAD_REQUEST)
@@ -131,7 +131,24 @@ def get_object(request, object_name, object_id):
     serializer = serializer_class(obj)
     return Response(serializer.data)
 
+@api_view(['GET'])
+def get_objects(request, object_name):
+    object_info = MODEL_MAP.get(object_name)
+    if not object_info:
+        return Response({"error": "Unknown model"}, status=status.HTTP_400_BAD_REQUEST)
+
+    object_class, serializer_class = object_info
+
+    try:
+        obj = object_class.objects.all()
+    except object_class.DoesNotExist:
+        return Response({'error': 'Object not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = serializer_class(obj, many=True)
+    return Response(serializer.data)
+
 @api_view(['PUT'])
+@permission_classes([IsAdminUser])
 def update_object(request, object_name, object_id):
     model_info = MODEL_MAP.get(object_name)
     if not model_info:
@@ -151,6 +168,7 @@ def update_object(request, object_name, object_id):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['DELETE'])
+@permission_classes([IsAdminUser])
 def delete_object(request, object_name, object_id):
     object_info = MODEL_MAP.get(object_name)
     if not object_info:
@@ -183,6 +201,7 @@ def group_pairs(request, group_id):
     return Response(serializer.data)
 
 @api_view(['POST'])
+@permission_classes([IsAdminUser])
 def create_ScheduledLesson(request,lesson_id, timeslot_id):
     try:
         lesson = Lesson.objects.get(id=lesson_id)

@@ -2,8 +2,9 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import './Pages.css';
-import Navigation from '../components/navigation/navigation';
+import '../../Pages.css';
+import '../../../assets/form.css'
+import Navigation from '../../../components/navigation/navigation';
 
 function CreateBuildingPage() {
     const [code, setCode] = useState('');
@@ -52,7 +53,7 @@ function CreateBuildingPage() {
     };
 
     return (
-        <div className="admin-form-page-container">
+        <div className="page-container">
             <Navigation links={[
                 ['/create-user', 'Создание пользователя'],
                 ['/admin/create-building', 'Создание корпуса'],
@@ -71,10 +72,10 @@ function CreateBuildingPage() {
                 ['/admin/create-educationform', 'Создание формы обучения'],
                 ['/admin/create-educationlevel', 'Создание уровня образования'],
             ]} />
-            <div className="admin-form-wrapper">
-                <div className="admin-form-header">
+            <div className="form-container">
+                <div className="form-header">
                 <h2>Добавление нового корпуса</h2>
-                    <button onClick={handleGoBack} className="admin-form-back-button">
+                    <button onClick={handleGoBack} className="form-back-button">
                         ← Назад 
                     </button>
                     </div>
@@ -85,7 +86,7 @@ function CreateBuildingPage() {
                         <label htmlFor="building-code">Код корпуса (например, К1, УЛК):</label>
                         <input id="building-code" type="text" value={code} onChange={(e) => setCode(e.target.value)} required />
                     </div>
-                    <button type="submit" className="admin-form-submit-button">Добавить корпус</button>
+                    <button type="submit" className="form-submit-button">Добавить корпус</button>
                 </form>
             </div>
         </div>
