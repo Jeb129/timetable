@@ -244,8 +244,7 @@ useEffect(() => {
             lesson: newLessonId,
             time_slot: modalTargetCell.timeSlotId
         };
-        await axios.post('http://localhost:8000/api/create/scheduledlesson/', 
-            scheduledLessonPayload,
+        await axios.post(`http://localhost:8000/api/createScheduledLesson/${newLessonId}/${modalTargetCell.timeSlotId}/`, 
             { headers: { 'Authorization': `Bearer ${token}` } }
         );
         
@@ -254,11 +253,7 @@ useEffect(() => {
         
         // Вызываем fetchScheduleLessons (или как вы назвали вашу функцию загрузки)
         // Эта функция асинхронная, дождемся ее завершения
-        await fetchAndDisplaySchedule(); // <--- УБЕДИТЕСЬ, ЧТО ЭТА ФУНКЦИЯ ВОЗВРАЩАЕТ ПРОМИС ИЛИ ИСПОЛЬЗУЕТСЯ await
-                                      // ИЛИ если она просто меняет состояние, то React сам перерисует
-                                      // Если fetchAndDisplaySchedule не async, то await не нужен, 
-                                      // но нужно дождаться обновления состояния.
-                                      // Проще всего, если fetchAndDisplaySchedule возвращает промис.
+        await fetchAndDisplaySchedule(); 
 
         // Уведомление для пользователя (можно использовать более продвинутое)
         console.log("Занятие успешно создано и добавлено в расписание!");

@@ -1,10 +1,22 @@
 from datetime import timedelta, datetime
 from .models import *
+def prebuid():
+        constraints = [
+            ("Пересечение по преподавателю", 5, "teacher_no_overlap"),
+            ("Пересечение по группе", 5, "group_no_overlap"),
+            ("Пересечение по аудиториям", 5, "no_room_overlap"),
+            ("Аудитория вмещает всех студентов", 5, "room_has_enough_seats"),
+            ("Аудитория соответствует оборудованию", 4, "room_meets_equipment_requirements"),
+            ("Предпочтения преподавателя по аудитории", 3, "matches_teacher_room_preference"),
+            ("Предпочтения преподавателя по времени", 2, "matches_teacher_time_preference"),
+            ("Переход между корпусами", 5, "enough_travel_time"),
+        ]
+        for name, weight, method in constraints:
+            Constraint.objects.get_or_create(name=name, weight=weight, method_name=method)
 
 class ConstraintEngine:
     def __init__(self, constraints=None):
         self.constraints = constraints or Constraint.objects.all()
-
     def evaluate(self, context) -> dict:
         results = {}
         for constraint in self.constraints:
@@ -18,19 +30,6 @@ class ConstraintEngine:
                 "weight": constraint.weight
             }
         return results
-    def prebuid():
-        constraints = [
-            ("Пересечение по преподавателю", 5, "teacher_no_overlap"),
-            ("Пересечение по группе", 5, "group_no_overlap"),
-            ("Пересечение по аудиториям", 5, "no_room_overlap"),
-            ("Аудитория вмещает всех студентов", 5, "room_has_enough_seats"),
-            ("Аудитория соответствует оборудованию", 4, "room_meets_equipment_requirements"),
-            ("Предпочтения преподавателя по аудитории", 3, "matches_teacher_room_preference"),
-            ("Предпочтения преподавателя по времени", 2, "matches_teacher_time_preference"),
-            ("Переход между корпусами", 5, "enough_travel_time"),
-        ]
-        for name, weight, method in constraints:
-            Constraint.objects.get_or_create(name=name, weight=weight, method_name=method)
 
     def sample_constraint(self, context) -> tuple[bool, str | None]:
         # логика...

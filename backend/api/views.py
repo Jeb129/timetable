@@ -6,7 +6,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 import logging
-from .constraint_engine import ConstraintEngine
+from .constraint_engine import *
 from .models import *
 from .serializers import *
 from .pervissions import *
@@ -289,7 +289,7 @@ def group_pairs(request, group_id):
     return Response(serializer.data)
 
 @api_view(['POST'])
-@permission_classes([IsAdminUser])
+@permission_classes([IsAdminUser])2
 def create_ScheduledLesson(request,lesson_id, timeslot_id):
     try:
         lesson = Lesson.objects.get(id=lesson_id)
@@ -298,7 +298,7 @@ def create_ScheduledLesson(request,lesson_id, timeslot_id):
         return Response({"error": "Занятие не найдено"}, status=status.HTTP_404_NOT_FOUND)
     except TimeSlot.DoesNotExist:
         return Response({"error": "Слот не найден"}, status=status.HTTP_404_NOT_FOUND)
-
+    print('проверяем ограничения')
     # Проверка ограничений
     engine = ConstraintEngine()
     context = {
@@ -306,9 +306,9 @@ def create_ScheduledLesson(request,lesson_id, timeslot_id):
         "time_slot": time_slot,
     }
     results = engine.evaluate(context)
-
+    
     failed = {name: info for name, info in results.items() if not info["passed"]}
-
+    print(failed)
     if failed:
         return Response({
             "status": "error",
@@ -322,3 +322,8 @@ def create_ScheduledLesson(request,lesson_id, timeslot_id):
     ScheduledLesson.objects.create(lesson=lesson, time_slot=time_slot)
 
     return Response({"status": "ok"}, status=status.HTTP_200_OK)
+ 
+@api_view(['POST'])
+@permission_classes([IsAdminUser])
+def constraint_prebuild(request):
+    prebuid()

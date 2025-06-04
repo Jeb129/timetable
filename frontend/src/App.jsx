@@ -25,6 +25,7 @@ import CreateUserPage from './pages/Creations/User/CreateUserPage.jsx';
 import CreateWeekdayPage from './pages/Creations/WeekDay/CreateWeekdayPage.jsx';
 import CreateTimeSlotPage from './pages/Creations/Timeslot/CreateTimeSlot.jsx';
 import InitializeTimeSlotsPage from './pages/InitializeTimeSlotsPage.jsx';
+import PrebuildConstraints from './pages/ConstraintEnginePrebuild.jsx';
 
 function App() {
   return (
@@ -57,14 +58,8 @@ function App() {
         <Route  path="/admin/create-educationdirection" element={<PrivateRoute><CreateEducationDirectionPage /></PrivateRoute>}  />
         <Route  path="/admin/create-educationform" element={<PrivateRoute><CreateEducationFormPage /></PrivateRoute>}  />
         <Route  path="/admin/create-educationlevel" element={<PrivateRoute><CreateEducationLevelPage /></PrivateRoute>}  />
-         <Route 
-          path="/admin/initialize-timeslots" // Выберите путь, например, такой
-          element={
-            <PrivateRoute> {/* Защищаем, чтобы только админ мог это делать */}
-              <InitializeTimeSlotsPage />
-            </PrivateRoute>
-          } 
-        />
+        <Route path="/admin/initialize-timeslots" element={<PrivateRoute><InitializeTimeSlotsPage /></PrivateRoute>} />
+        <Route path='/prebuildConstraints' element={<PrivateRoute><PrebuildConstraints /></PrivateRoute>}/>
       </Routes>
     </Router>
   );

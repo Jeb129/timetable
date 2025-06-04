@@ -19,4 +19,6 @@ urlpatterns = [
     path('createScheduledLesson/<int:lesson_id>/<int:timeslot_id>/',create_ScheduledLesson), # Универсальное удаление объекта
     path('list/<str:model_name>/', list_objects, name='universal-list'), # Универсальный эндпоинт для получения списка объектов модели
 
+    path('prebuildconstraints/', constraint_prebuild), 
+
 ]
