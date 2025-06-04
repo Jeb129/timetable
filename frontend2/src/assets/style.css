@@ -1,0 +1,9 @@
+#root, .page-container{
+    display: flex;
+}
+.page-container{
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+}
+

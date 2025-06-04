@@ -306,7 +306,6 @@ useEffect(() => {
         }
         );
         } catch (err) {
-          setIsModalOpen(false);
           if (err.response?.data?.violations) {
             const newErrors = {};
             Object.entries(err.response.data.violations).forEach(([key, value]) => {
@@ -316,6 +315,7 @@ useEffect(() => {
           } else {
             setErrors({ root: 'Неизвестная ошибка' });
           }
+          setIsModalOpen(false); return;
         }
         
         setIsModalOpen(false); 
@@ -475,6 +475,14 @@ useEffect(() => {
                       >
                         ✖ {/* Символ крестика (X) */}
                       </button>
+                    )}
+                    {editable && lessonItem.scheduledLessonId && (
+                      <div className="lesson-move-buttons">
+                        <button onClick={(e) => {e.stopPropagation(); handleMoveLesson(day, timeIndex, 'up')}} className="move-btn" title="Вверх">↑</button>
+                        <button onClick={(e) => {e.stopPropagation(); handleMoveLesson(day, timeIndex, 'down')}} className="move-btn" title="Вниз">↓</button>
+                        <button onClick={(e) => {e.stopPropagation(); handleMoveLesson(day, timeIndex, 'left')}} className="move-btn" title="Влево">←</button>
+                        <button onClick={(e) => {e.stopPropagation(); handleMoveLesson(day, timeIndex, 'right')}} className="move-btn" title="Вправо">→</button>
+                      </div>
                     )}
                   </div>
                 </div>

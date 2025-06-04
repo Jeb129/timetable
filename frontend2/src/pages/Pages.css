@@ -1,0 +1,777 @@
+/* --- Общие стили для body или корневого элемента, если необходимо --- */
+html, body, #root { /* #root - это обычно div, куда рендерится ваше React-приложение */
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%; /* Явно задаем ширину */
+  font-family: Arial, sans-serif; /* Базовый шрифт */
+  box-sizing: border-box; /* Хорошая практика */
+}
+
+*, *::before, *::after {
+  box-sizing: inherit; /* Чтобы все элементы наследовали box-sizing */
+}
+
+/* Стили для LoginPage (оставляем как было, убедитесь, что .login-page-container занимает всю ширину) */
+.login-page-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh; /* или height: 100% если #root тоже 100% */
+  width: 100%;
+  background-color: #f0f7ff;
+  padding: 20px;
+  /* Для отладки: border: 5px solid red; */
+}
+
+
+/* --- Стили для LoginPage --- */
+.login-page-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  width: 100%; /* ИЛИ width: 100vw; Убедитесь, что контейнер занимает всю ширину */
+  background-color: #f0f7ff;
+  padding: 20px; /* Отступы внутри контейнера, чтобы форма не прилипала к краям на малых экранах */
+  box-sizing: border-box;
+}
+
+.login-form-container {
+  padding: 30px;
+  max-width: 400px;
+  width: 100%; /* Чтобы на маленьких экранах не вылезал за пределы page-container */
+  background-color: #ffffff; /* Белый фон формы */
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
+}
+
+.login-title {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 25px;
+  text-align: center;
+  color: #005f99; /* Темно-голубой для заголовка */
+}
+
+.login-input-group {
+  margin-bottom: 15px;
+}
+
+.login-password-input-group {
+  margin-bottom: 25px;
+  position: relative; /* Необходимо для абсолютного позиционирования кнопки показа пароля */
+}
+
+.login-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.login-input {
+  border: 1px solid #add8e6; /* Светло-голубая рамка */
+  padding: 10px 12px;
+  width: 100%;
+  border-radius: 4px;
+  box-sizing: border-box; /* Важно, чтобы padding и border не увеличивали общую ширину */
+  font-size: 16px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease; /* Плавный переход для фокуса */
+}
+
+.login-input:focus {
+  outline: none;
+  border-color: #007bff; /* Более яркая голубая рамка при фокусе */
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25); /* Легкая тень при фокусе */
+}
+
+.login-input-password { /* Класс для поля пароля, чтобы сделать отступ для иконки */
+  padding-right: 40px; /* Место для кнопки показа пароля */
+}
+
+.login-password-toggle-button {
+  position: absolute;
+  top: 50%; /* Начальное позиционирование */
+  /* Если есть label, кнопка должна быть ниже.
+     Примерно на высоте input + половина высоты кнопки.
+     Точнее можно подстроить, если label над input.
+     Если label слева от input, то top: 50% и transform: translateY(-50%) должно быть ок.
+     Давайте попробуем выровнять относительно верха родителя + отступ для лейбла.
+  */
+  right: 10px;
+  /* Выравниваем кнопку по центру высоты инпута, если лейбл сверху */
+  /* Высота лейбла + margin-bottom + половина высоты инпута (примерно) */
+  /* Это значение нужно будет подстроить, если лейбл есть */
+  /* Проще всего, если лейбл не влияет на поток так сильно, или кнопка выравнивается по инпуту */
+  transform: translateY(-50%); /* Выравнивание по вертикали, если top: 50% от высоты инпута */
+  
+  /* Если label находится ВНУТРИ .login-password-input-group и влияет на поток: */
+  /* Например, если label над input, то кнопка должна быть ниже. */
+  /* Можно попробовать так (если инпут ~38-40px высотой и лейбл ~20px): */
+  /* top: calc(20px + 5px + 19px); /* font-size-label + margin-bottom-label + половина высоты инпута */
+  /* transform: translateY(-50%); */
+
+  /* Давайте сделаем проще: если label всегда сверху, то кнопка позиционируется относительно input.
+     В таком случае ее можно разместить рядом с input, а не внутри общего div.
+     Но при текущей структуре, где кнопка внутри .login-password-input-group:
+  */
+  top: 0; /* Начало от верха родителя */
+  bottom: 0; /* Растягиваем по высоте родителя (если инпут один) */
+  margin-top: auto; /* Выравниваем по вертикали */
+  margin-bottom: auto; /* Выравниваем по вертикали */
+  height: fit-content; /* Чтобы кнопка была размером с контент (иконку) */
+  /* ИЛИ если label сверху, то: */
+  /* top: calc(1em + 0.5em + 10px + 1px); /* font-size + margin-bottom + padding-input + border-input */
+  /* transform: translateY(-50%);  */
+  /* Самый надежный способ, если label всегда над input:
+     установить top кнопки так, чтобы он соответствовал положению input + половина высоты input
+  */
+  /* Если label имеет line-height и margin: */
+  /* Предположим, label ~21px + margin 5px. Инпут ~40px.
+  top: calc(21px + 5px + 20px);  ~46px от верха родителя
+  transform: translateY(-50%); */
+  
+  /* Альтернативно, если кнопка должна быть на уровне инпута, а лейбл выше: */
+  /* Можно добавить display:flex к .login-password-input-group и выровнять инпут и кнопку по align-items: center.
+     Но position:relative на родителе и absolute на кнопке проще для этого случая.
+  */
+  /* Самый простой вариант для кнопки справа от input:
+     Пусть она привязывается к высоте input, а не всего блока с label.
+     Поэтому лучше сделать так, чтобы .login-password-input-group был `display: flex; flex-direction: column;`
+     а инпут и кнопка были бы вложены в еще один div с `position: relative;`
+     Но пока упростим:
+  */
+  /* Если у вас label над input, то этот top должен быть больше */
+  top: 2.3em; /* Примерное значение, если label занимает одну строку */
+  transform: translateY(-50%);
+
+
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0 5px; /* Небольшие отступы для кликабельности */
+  display: flex;
+  align-items: center;
+  color: #007bff; /* Цвет иконки */
+}
+
+.login-password-toggle-button:hover .password-toggle-icon {
+  color: #0056b3;
+}
+
+.password-toggle-icon { /* Стили для самой иконки, если нужно */
+  font-size: 1.2em; /* Размер иконки */
+}
+
+.login-button {
+  width: 100%;
+  background-color: #007bff; /* Яркий синий для кнопки */
+  color: white;
+  padding: 12px 16px;
+  border-radius: 4px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.2s ease;
+}
+
+.login-button:hover {
+  background-color: #0056b3; /* Темнее при наведении */
+}
+
+.login-button:active {
+  background-color: #004085; /* Еще темнее при нажатии */
+}
+
+.login-error-message {
+  color: red;
+  font-size: 14px;
+  text-align: center;
+  margin-top: 10px;
+}
+
+/* === Вставьте это в конец вашего Pages.css === */
+
+/* --- Стили для TimetableView --- */
+.timetable-view-container {
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+.timetable-view-header, .timetable-editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+}
+
+.timetable-view-title, .timetable-editor-title {
+  font-size: 26px;
+  font-weight: bold;
+  color: #005f99;
+}
+
+.timetable-view-login-button {
+  background-color: #007bff;
+  color: white;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  text-decoration: none; /* Если это будет ссылка-кнопка */
+  transition: background-color 0.2s ease;
+}
+
+.timetable-view-login-button:hover {
+  background-color: #0056b3;
+}
+
+.timetable-filter-section { /* Общий для View и Editor */
+  margin-bottom: 20px;
+  padding: 15px;
+  background-color: #f0f7ff;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex-wrap: wrap; /* Для адаптивности */
+}
+
+.timetable-filter-label { /* Общий для View и Editor */
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+}
+
+.timetable-filter-select { /* Общий для View и Editor */
+  padding: 8px 12px;
+  font-size: 16px;
+  border-radius: 4px;
+  border: 1px solid #add8e6;
+  min-width: 200px;
+  background-color: white; /* Фон для селекта */
+}
+
+.timetable-filter-select:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.timetable-action-button { /* Общий для View и Editor, но с разными цветами */
+  padding: 10px 18px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.2s ease;
+}
+
+.timetable-action-button-view { /* Для кнопки "Показать расписание" */
+  background-color: #28a745; /* Зеленый */
+  color: white;
+}
+.timetable-action-button-view:hover {
+  background-color: #1e7e34;
+}
+.timetable-action-button-view:disabled {
+  background-color: #a3d9b1;
+  cursor: not-allowed;
+}
+
+
+.timetable-info-text { /* Общий для View и Editor */
+  margin-top: 20px;
+  color: #555;
+  text-align: center;
+}
+
+/* --- Стили для TimetableEditor --- */
+.timetable-editor-container {
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+.timetable-editor-controls {
+  display: flex;
+  gap: 10px;
+}
+
+.timetable-editor-button { /* Базовый класс для кнопок редактора */
+  padding: 10px 18px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  color: white;
+  transition: background-color 0.2s ease;
+}
+
+.timetable-editor-create-user-button {
+  background-color: #17a2b8; /* Бирюзовый */
+}
+.timetable-editor-create-user-button:hover {
+  background-color: #117a8b;
+}
+
+.timetable-editor-logout-button {
+  background-color: #dc3545; /* Красный */
+}
+.timetable-editor-logout-button:hover {
+  background-color: #b02a37;
+}
+
+.timetable-action-button-editor { /* Для кнопки "Редактировать выбранное" */
+  background-color: #ffc107; /* Желтый */
+  color: #212529; /* Темный текст для желтой кнопки */
+}
+.timetable-action-button-editor:hover {
+  background-color: #e0a800;
+}
+.timetable-action-button-editor:disabled {
+  background-color: #ffe083;
+  color: #6d5f37;
+  cursor: not-allowed;
+}
+
+/* --- Стили для ScheduleGrid --- */
+.schedule-grid-container {
+  border: 1px solid #b0c4de; /* Светло-стальной синий */
+  border-radius: 8px;
+  overflow: hidden; /* Чтобы скругление работало для вложенных элементов */
+  font-family: Arial, sans-serif;
+  margin-top: 20px;
+  background-color: #fff; /* Фон для самой таблицы, если она не полностью заполнена */
+}
+
+.schedule-grid-week-toggle {
+  padding: 12px;
+  background-color: #e6f0ff; /* Очень светло-голубой */
+  border-bottom: 1px solid #b0c4de;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.schedule-grid-week-toggle-label {
+  font-size: 16px;
+  cursor: pointer;
+  color: #005f99;
+  font-weight: 500;
+  display: flex; /* Для выравнивания чекбокса и текста */
+  align-items: center;
+}
+
+.schedule-grid-week-toggle-checkbox {
+  margin-right: 8px;
+  transform: scale(1.1); /* Немного увеличить чекбокс */
+  cursor: pointer;
+}
+
+.schedule-grid-table {
+  display: table;
+  width: 100%;
+  border-collapse: collapse; /* Убирает двойные рамки между ячейками */
+}
+
+.schedule-grid-header-row {
+  display: table-row;
+  font-weight: bold;
+  background-color: #d0e0f0; /* Светло-голубой для шапки */
+  color: #334e68; /* Цвет текста в шапке */
+}
+
+.schedule-grid-row {
+  display: table-row;
+}
+
+.schedule-grid-cell {
+  display: table-cell;
+  border: 1px solid #b0c4de;
+  padding: 0; /* Убираем padding ячейки, чтобы input/div внутри занимал все место */
+  min-height: 70px; /* Минимальная высота ячейки */
+  text-align: center;
+  vertical-align: middle; /* Вертикальное выравнивание */
+  position: relative; /* Для Draggable */
+  font-size: 14px;
+}
+
+.schedule-grid-time-header-cell { /* Ячейка для времени */
+  width: 80px; /* Фиксированная ширина */
+  font-weight: bold;
+  background-color: #d0e0f0; /* Такой же, как у шапки дней */
+  padding: 8px; /* Внутренний отступ для текста времени */
+  color: #334e68;
+}
+
+.schedule-grid-day-header-cell { /* Ячейка для дня недели */
+  padding: 10px 8px;
+}
+
+.schedule-grid-lesson-card { /* Для отображения в режиме просмотра */
+  padding: 8px;
+  background-color: #f0f8ff; /* Очень светлый голубой (Алиса синий) */
+  border-radius: 4px;
+  margin: 4px; /* Небольшой отступ, чтобы было видно границы ячейки */
+  word-break: break-word; /* Перенос длинных слов */
+  min-height: 50px; /* Чтобы пустые выглядели нормально и были кликабельны */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #333;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.schedule-grid-lesson-input { /* Для input в режиме редактирования */
+  width: 100%;
+  height: 100%;
+  min-height: 68px; /* Чтобы занимал всю ячейку, учитывая ее border */
+  border: none;
+  padding: 8px;
+  box-sizing: border-box;
+  text-align: center;
+  font-size: 14px;
+  background-color: transparent; /* Прозрачный фон инпута */
+  color: #333;
+}
+.schedule-grid-lesson-input:focus {
+  outline: none;
+  background-color: rgba(0, 123, 255, 0.05); /* Легкая подсветка при фокусе */
+}
+
+.schedule-grid-draggable-lesson { /* Обертка для Draggable элемента */
+  width: 100%;
+  height: 100%;
+  min-height: 68px; /* Важно для dnd, должно соответствовать ячейке */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab; /* Курсор для перетаскивания */
+  outline: none; /* Убираем аутлайн при фокусе на draggable */
+}
+.schedule-grid-draggable-lesson:focus-visible { /* Для доступности */
+    box-shadow: 0 0 0 2px #007bff; /* Контур при фокусе с клавиатуры */
+}
+
+
+.schedule-grid-cell-dragging-over { /* Класс для Droppable ячейки, НАД которой тащат */
+  background-color: #cce0ff !important; /* Подсветка ячейки при наведении Draggable */
+}
+
+.schedule-grid-lesson-dragging { /* Класс для Draggable элемента, КОТОРЫЙ тащат */
+  opacity: 0.8;
+  background-color: #add8e6 !important; /* Ярче, чтобы было видно что тащим */
+  box-shadow: 0 3px 7px rgba(0,0,0,0.25) !important;
+  border-radius: 4px; /* Скруглим углы у перетаскиваемого элемента */
+  cursor: grabbing !important; /* Курсор во время перетаскивания */
+}
+
+.schedule-grid-lesson-dragging .schedule-grid-lesson-input {
+  /* Можно изменить стиль инпута внутри перетаскиваемого элемента, если нужно */
+  font-weight: bold;
+}
+
+/* Если в ячейке нет урока и она пустая в режиме просмотра */
+.schedule-grid-lesson-card-empty {
+  color: #aaa;
+  font-style: italic;
+}
+/* --- Стили для CreateUserPage --- */
+.create-user-page-container { /* Общий контейнер для центрирования */
+  display: flex;
+  flex-direction: column; /* Чтобы заголовок и форма были друг под другом */
+  align-items: center;
+  justify-content: center;
+  min-height: 90vh; /* Занять почти всю высоту, чтобы было по центру */
+  padding: 20px;
+  font-family: Arial, sans-serif;
+  background-color: #f8f9fa; /* Нейтральный светлый фон */
+}
+
+.create-user-form-wrapper { /* Обертка для самой формы */
+  background-color: #ffffff;
+  padding: 25px 30px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 450px; /* Ограничение ширины формы */
+  box-sizing: border-box;
+}
+
+.create-user-form-wrapper h2 {
+  text-align: center;
+  color: #005f99; /* Такой же синий, как на странице логина */
+  margin-top: 0;
+  margin-bottom: 25px;
+  font-size: 22px;
+}
+
+.create-user-form-wrapper form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px; /* Расстояние между элементами формы */
+}
+
+.create-user-form-wrapper .form-input-group { /* Группа для label + input */
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.create-user-form-wrapper label {
+  font-weight: 500;
+  color: #333;
+  font-size: 14px;
+}
+
+.create-user-form-wrapper input[type="text"],
+.create-user-form-wrapper input[type="password"] {
+  padding: 10px 12px;
+  border: 1px solid #ced4da; /* Стандартная серая рамка */
+  border-radius: 4px;
+  font-size: 16px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.create-user-form-wrapper input[type="text"]:focus,
+.create-user-form-wrapper input[type="password"]:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.create-user-form-wrapper button[type="submit"] {
+  padding: 10px 15px;
+  background-color: #28a745; /* Зеленый для кнопки "Создать" */
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  margin-top: 10px; /* Небольшой отступ сверху */
+}
+
+.create-user-form-wrapper button[type="submit"]:hover {
+  background-color: #218838;
+}
+
+.create-user-form-wrapper .error-message { /* Изменен класс с "error" на "error-message" для уникальности */
+  color: #dc3545; /* Красный для ошибок */
+  text-align: center;
+  font-size: 14px;
+  margin-top: 10px;
+  min-height: 1.2em; /* Чтобы не прыгала разметка, если ошибки нет */
+}
+
+/* Pages.css */
+
+/* ... существующие стили ... */
+
+.timetable-filter-section-inputs { /* Модификатор для секции фильтра */
+  flex-direction: column; /* Располагаем элементы фильтра вертикально */
+  align-items: stretch; /* Растягиваем элементы на всю ширину */
+  gap: 20px; /* Увеличим расстояние между полями */
+}
+
+.autocomplete-wrapper {
+  position: relative; /* Для позиционирования списка подсказок */
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.timetable-filter-input { /* Новый класс для инпутов автодополнения */
+  padding: 10px 12px;
+  font-size: 16px;
+  border-radius: 4px;
+  border: 1px solid #add8e6; /* Светло-голубая рамка */
+  width: 100%; /* Занимает всю ширину родителя */
+  box-sizing: border-box;
+}
+.timetable-filter-input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.autocomplete-suggestions {
+  position: absolute;
+  top: 100%; /* Располагается сразу под инпутом */
+  left: 0;
+  right: 0;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  z-index: 10; /* Чтобы был поверх других элементов */
+  max-height: 200px; /* Ограничение высоты списка */
+  overflow-y: auto; /* Прокрутка, если много вариантов */
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.autocomplete-suggestions li {
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+.autocomplete-suggestions li:hover {
+  background-color: #f0f0f0;
+}
+
+.autocomplete-suggestions li:not(:last-child) {
+  border-bottom: 1px solid #eee;
+}
+.admin-form-page-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start; 
+  min-height: 90vh; /* Чтобы было видно, даже если форма короткая */
+  width: 100%; /* Чтобы занимал всю ширину */
+  padding: 30px 20px;
+  background-color: #e9ecef; /* Фон для админ-страниц, ОТЛИЧНЫЙ от общего фона сайта, если нужно */
+  box-sizing: border-box; /* Важно */
+}
+
+.admin-form-wrapper {
+  background-color: #ffffff; /* Белый фон для самой формы */
+  padding: 25px 30px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.075);
+  width: 100%;
+  max-width: 600px; 
+  box-sizing: border-box;
+}
+.checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  max-height: 150px;
+  overflow-y: auto;
+}
+.checkbox-item {
+  display: flex;
+  align-items: center;
+}
+.checkbox-item input[type="checkbox"] {
+  margin-right: 8px;
+  width: auto; /* Чтобы не растягивался на 100% */
+}
+.checkbox-item label {
+  font-weight: normal; /* Переопределяем стиль label из .form-input-group */
+  margin-bottom: 0;
+}
+.admin-form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px; /* Такой же отступ, как у h2 раньше */
+}
+
+.admin-form-header h2 {
+  margin-bottom: 0; /* Убираем нижний отступ у заголовка, т.к. он теперь у .admin-form-header */
+}
+
+.admin-form-back-button {
+  padding: 8px 12px;
+  font-size: 14px;
+  color: #007bff; /* Синий, как ссылки */
+  background-color: transparent;
+  border: 1px solid #007bff;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  text-decoration: none; /* На случай, если это будет <Link> */
+}
+
+.admin-form-back-button:hover {
+  background-color: #007bff;
+  color: white;
+}
+.admin-sections-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 20px; /* Расстояние между секциями */
+  margin-bottom: 30px; /* Отступ перед фильтром расписания */
+}
+
+.admin-actions-section {
+  padding: 20px;
+  background-color: #ffffff; /* Белый фон для каждой секции */
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1); /* Легкая тень */
+}
+
+.admin-actions-title {
+  margin-top: 0;
+  margin-bottom: 18px;
+  font-size: 1.15em; /* Немного крупнее */
+  color: #343a40;
+  border-bottom: 1px solid #e9ecef;
+  padding-bottom: 10px;
+}
+
+.admin-actions-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px; /* Расстояние между кнопками */
+}
+
+.admin-action-button { /* Базовый стиль кнопки */
+  padding: 10px 18px; /* Увеличим padding */
+  font-size: 0.9rem; /* Немного меньше базового шрифта */
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  font-weight: 500;
+  min-width: 180px; /* Минимальная ширина для единообразия */
+  text-align: center;
+}
+
+.admin-action-button:hover {
+  opacity: 0.9;
+  transform: translateY(-1px); /* Небольшой эффект при наведении */
+}
+
+.admin-action-button:active {
+  transform: translateY(0px);
+}
+
+/* Цвета для кнопок (примеры, подберите свои) */
+.admin-action-button.color-buildings { background-color: #546E7A; } /* Темно-серый-синий */
+.admin-action-button.color-rooms { background-color: #78909C; }    /* Светлее */
+.admin-action-button.color-equipment { background-color: #90A4AE; } /* Еще светлее */
+.admin-action-button.color-teachers { background-color: #00796B; } /* Тиловый */
+
+.admin-action-button.color-institutes { background-color: #455A64; } 
+.admin-action-button.color-directions { background-color: #607D8B; }
+.admin-action-button.color-eduforms { background-color: #7E57C2; } /* Фиолетовый */
+.admin-action-button.color-edulevels { background-color: #5E35B1; }
+.admin-action-button.color-groups { background-color: #0288D1; }   /* Голубой */
+.admin-action-button.color-disciplines { background-color: #D81B60; } /* Розовый */
+.admin-action-button.color-lessontypes { background-color: #F4511E; } /* Оранжевый */
+.admin-action-button.color-controltypes { background-color: #FFB300; color: #333; } /* Желтый, темный текст */
+.admin-action-button.color-curriculum { background-color: #388E3C; } /* Зеленый */
+
+.admin-action-button.color-pairs { background-color: #6A1B9A; } /* Темно-фиолетовый */
+.admin-action-button.color-weekdays { background-color: #8E24AA; }

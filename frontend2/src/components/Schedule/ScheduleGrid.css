@@ -1,0 +1,203 @@
+/* src/components/Schedule/ScheduleGrid.css */
+
+.schedule-grid-container {
+  border: 1px solid #b0c4de;
+  border-radius: 8px;
+  overflow: hidden;
+  font-family: Arial, sans-serif;
+  margin-top: 20px;
+  background-color: #fff;
+  /* Добавим для отладки, если он не виден */
+  /* min-height: 300px;  */
+  /* border: 2px dashed green; */
+}
+
+.schedule-grid-week-toggle {
+  padding: 12px;
+  background-color: #e6f0ff;
+  border-bottom: 1px solid #b0c4de;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.schedule-grid-week-toggle-label {
+  font-size: 16px;
+  cursor: pointer;
+  color: #005f99;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+}
+
+.schedule-grid-week-toggle-checkbox {
+  margin-right: 8px;
+  transform: scale(1.1);
+  cursor: pointer;
+}
+
+.schedule-grid-table {
+  display: table;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.schedule-grid-header-row {
+  display: table-row;
+  font-weight: bold;
+  background-color: #d0e0f0;
+  color: #334e68;
+}
+
+.schedule-grid-row {
+  display: table-row;
+}
+
+.schedule-grid-cell {
+  display: table-cell;
+  border: 1px solid #b0c4de;
+  padding: 0;
+  min-height: 70px;
+  text-align: center;
+  vertical-align: middle;
+  position: relative;
+  font-size: 14px;
+}
+
+.schedule-grid-time-header-cell {
+  width: 80px;
+  font-weight: bold;
+  background-color: #d0e0f0;
+  padding: 8px;
+  color: #334e68;
+}
+
+.schedule-grid-day-header-cell {
+  padding: 10px 8px;
+}
+
+.schedule-grid-lesson-card {
+  padding: 8px;
+  background-color: #f0f8ff;
+  border-radius: 4px;
+  margin: 4px;
+  word-break: break-word;
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #333;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.schedule-grid-lesson-input {
+  width: 100%;
+  height: 100%;
+  min-height: 68px;
+  border: none;
+  padding: 8px;
+  box-sizing: border-box;
+  text-align: center;
+  font-size: 14px;
+  background-color: transparent;
+  color: #333;
+}
+.schedule-grid-lesson-input:focus {
+  outline: none;
+  background-color: rgba(0, 123, 255, 0.05);
+}
+
+.schedule-grid-draggable-lesson {
+  width: 100%;
+  height: 100%;
+  min-height: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  outline: none;
+}
+.schedule-grid-draggable-lesson:focus-visible {
+    box-shadow: 0 0 0 2px #007bff;
+}
+
+.schedule-grid-cell-dragging-over {
+  background-color: #cce0ff !important;
+}
+
+.schedule-grid-lesson-dragging {
+  opacity: 0.8;
+  background-color: #add8e6 !important;
+  box-shadow: 0 3px 7px rgba(0,0,0,0.25) !important;
+  border-radius: 4px;
+  cursor: grabbing !important;
+}
+
+.schedule-grid-lesson-dragging .schedule-grid-lesson-input {
+  font-weight: bold;
+}
+
+.schedule-grid-lesson-card-empty {
+  color: #aaa;
+  font-style: italic;
+}
+.schedule-lesson-content {
+  position: relative; /* Для позиционирования кнопок, если нужно */
+  display: flex;
+  flex-direction: column; /* Располагаем инпут и кнопки вертикально */
+  height: 100%;
+  justify-content: space-between; /* Растягиваем инпут, кнопки снизу */
+}
+
+.schedule-grid-lesson-input {
+  flex-grow: 1; /* Инпут занимает доступное пространство */
+  /* ... ваши существующие стили для инпута ... */
+  border: none; /* Убираем рамку, если кнопки будут близко */
+  padding: 4px;
+}
+
+.lesson-move-buttons {
+  display: flex;
+  justify-content: space-around; /* Или center, space-between */
+  padding: 2px 0; /* Небольшой отступ */
+  /* visibility: hidden; /* По умолчанию скрыты */
+  opacity: 0.3; /* Сделать полупрозрачными по умолчанию */
+  transition: opacity 0.2s ease-in-out;
+}
+
+.schedule-grid-cell:hover .lesson-move-buttons,
+.schedule-lesson-content:hover .lesson-move-buttons { /* Показываем кнопки при наведении на ячейку или контент */
+  /* visibility: visible; */
+  opacity: 1;
+}
+
+.move-btn {
+  background: none;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 10px; /* Маленький шрифт для стрелок */
+  line-height: 1;
+  padding: 2px 4px;
+  margin: 0 1px;
+  color: #555;
+}
+
+.move-btn:hover {
+  background-color: #f0f0f0;
+  border-color: #bbb;
+}
+/* ScheduleGrid.css */
+.schedule-grid-cell.editable-empty-cell {
+  cursor: pointer;
+  background-color: #f0f8ff; /* Легкий фон, чтобы показать, что ячейка кликабельна */
+}
+.schedule-grid-cell.editable-empty-cell:hover {
+  background-color: #e6f2ff;
+}
+.schedule-grid-lesson-input[placeholder="+"] {
+    text-align: center;
+    font-size: 1.5em;
+    color: #aaa;
+}

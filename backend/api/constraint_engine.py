@@ -20,6 +20,7 @@ class ConstraintEngine:
     def evaluate(self, context) -> dict:
         results = {}
         for constraint in self.constraints:
+            print(constraint.method_name)
             method = getattr(self, constraint.method_name, None)
             if not method:
                 continue  # метод не найден — пропускаем
@@ -41,13 +42,13 @@ class ConstraintEngine:
     def teacher_no_overlap(self, context) -> tuple[bool, str | None]:
         lesson = context["lesson"]
         time_slot = context["time_slot"]
-        teacher = lesson.curriculum.teacher
+        teacher = lesson.teacher
 
-        conflict = ScheduledLesson.objects.filter(
-            lesson__curriculum__teacher=teacher,
+        conflict = ScheduledLesson.objects.filter( 
+            lesson__teacher=teacher,
             time_slot=time_slot
         ).exclude(lesson=lesson).exists()
-
+        
         if conflict:
             return False, f"Преподаватель {teacher} уже занят в это время"
         return True, None
@@ -94,10 +95,10 @@ class ConstraintEngine:
 
     # 4. Соответствие техническим требованиям
     def room_meets_equipment_requirements(self, context) -> tuple[bool, str | None]:
-        curriculum = context["lesson"].curriculum
-        lesson_type = curriculum.lesson_type
-        discipline = curriculum.discipline
-        room_equipment = set(context["lesson"].room.equipment.values_list("id", flat=True))
+        lesson = context["lesson"]
+        lesson_type = lesson.lesson_type
+        discipline = lesson.discipline
+        room_equipment = set(lesson.room.equipment.values_list("id", flat=True))
 
         try:
             requirement = LessonRequirement.objects.get(
@@ -116,11 +117,17 @@ class ConstraintEngine:
     # 5. Пожелания преподавателя по аудитории
     def matches_teacher_room_preference(self, context) -> tuple[bool, str | None]:
         lesson = context["lesson"]
-        curriculum = lesson.curriculum
-        teacher = curriculum.teacher
-        discipline = curriculum.discipline
-        lesson_type = curriculum.lesson_type
+        teacher = lesson.teacher
+        discipline = lesson.discipline
+        lesson_type = lesson.lesson_type
         room = lesson.room
+        has_preferences = TeacherRoomPreference.objects.filter(
+            teacher=teacher,
+            discipline=discipline,
+            lesson_type=lesson_type).exists()
+
+        if not has_preferences:
+            return True, None
 
         preferred = TeacherRoomPreference.objects.filter(
             teacher=teacher,
@@ -136,7 +143,7 @@ class ConstraintEngine:
 
     # 6. Пожелания по времени
     def matches_teacher_time_preference(self, context) -> tuple[bool, str | None]:
-        teacher = context["lesson"].curriculum.teacher
+        teacher = context["lesson"].teacher
         time_slot = context["time_slot"]
 
         is_excluded = TeacherTimePreference.objects.filter(
@@ -154,14 +161,14 @@ class ConstraintEngine:
         lesson = context["lesson"]
         time_slot = context["time_slot"]
         groups = lesson.groups.all()
-        teacher = lesson.curriculum.teacher
+        teacher = lesson.teacher
 
         previous_lessons = ScheduledLesson.objects.filter(
             time_slot__pair__number=time_slot.pair.number - 1,
             time_slot__weekday=time_slot.weekday,
             time_slot__is_even_week=time_slot.is_even_week
         ).filter(
-            models.Q(lesson__curriculum__teacher=teacher) |
+            models.Q(lesson__teacher=teacher) |
             models.Q(lesson__groups__in=groups)
         ).distinct()
 
@@ -178,7 +185,7 @@ class ConstraintEngine:
         lesson = context["lesson"]
         time_slot = context["time_slot"]
         groups = lesson.groups.all()
-        teacher = lesson.curriculum.teacher
+        teacher = lesson.teacher
         current_pair = time_slot.pair
 
         previous_lessons = ScheduledLesson.objects.filter(
@@ -186,7 +193,7 @@ class ConstraintEngine:
             time_slot__is_even_week=time_slot.is_even_week,
             time_slot__pair__number__lt=current_pair.number,
         ).filter(
-            models.Q(lesson__curriculum__teacher=teacher) |
+            models.Q(lesson__teacher=teacher) |
             models.Q(lesson__groups__in=groups)
         ).distinct()
 
