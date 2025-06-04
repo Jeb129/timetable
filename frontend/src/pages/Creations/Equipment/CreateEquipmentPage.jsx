@@ -1,10 +1,12 @@
-// src/pages/CreateDisciplinePage.jsx
+// src/pages/CreateEquipmentPage.jsx
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import './Pages.css';
+import Navigation from '../../../components/navigation/navigation';
+import '../../Pages.css';
+import '../../../assets/form.css'
 
-function CreateDisciplinePage() {
+function CreateEquipmentPage() {
     const [name, setName] = useState('');
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
@@ -16,7 +18,7 @@ function CreateDisciplinePage() {
         e.preventDefault();
         setError(''); setSuccess('');
         if (!name.trim()) {
-            setError('Название дисциплины обязательно.');
+            setError('Название оборудования обязательно.');
             return;
         }
         const token = localStorage.getItem('accessToken');
@@ -26,29 +28,25 @@ function CreateDisciplinePage() {
         }
         try {
             const response = await axios.post(
-                'http://localhost:8000/api/create/discipline/',
+                'http://localhost:8000/api/create/equipment/',
                 { name: name.trim() },
                 { headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } }
             );
-            setSuccess(`Дисциплина "${response.data.name}" успешно создана (ID: ${response.data.id})!`);
+            setSuccess(`Оборудование "${response.data.name}" успешно создано!`);
             setName('');
         } catch (err) {
             // Стандартная обработка ошибок axios
-            let errorMessage = 'Ошибка создания дисциплины.';
-            if (err.response && err.response.data) {
-                const serverError = err.response.data;
-                if (serverError.error) errorMessage = serverError.error;
-                else if (serverError.detail) errorMessage = serverError.detail;
-                else errorMessage = Object.entries(serverError).map(([field, errors]) => `${field}: ${Array.isArray(errors) ? errors.join(', ') : errors}`).join('; ');
-            } else if (err.request) errorMessage = 'Сервер не ответил.';
+            let errorMessage = 'Ошибка создания оборудования.';
+            if (err.response && err.response.data) { /* ... */ } // Скопируйте
+            else if (err.request) errorMessage = 'Сервер не ответил.';
             else errorMessage = err.message;
             setError(errorMessage);
-            console.error("Create discipline error:", err.response || err);
+            console.error("Create equipment error:", err.response || err);
         }
     };
 
     return (
-        <div className="admin-form-page-container">
+        <div className="page-container">
             <Navigation links={[
                 ['/create-user', 'Создание пользователя'],
                 ['/admin/create-building', 'Создание корпуса'],
@@ -67,22 +65,22 @@ function CreateDisciplinePage() {
                 ['/admin/create-educationform', 'Создание формы обучения'],
                 ['/admin/create-educationlevel', 'Создание уровня образования'],
             ]} />
-            <div className="admin-form-wrapper">
-                <div className="admin-form-header">
-                    <h2>Добавление новой дисциплины</h2>
-                    <button onClick={handleGoBack} className="admin-form-back-button">← Назад</button>
+            <div className="form-container">
+                <div className="form-header">
+                    <h2>Добавление нового оборудования</h2>
+                    <button onClick={handleGoBack} className="form-back-button">← Назад</button>
                 </div>
                 {error && <p className="error-message">{error}</p>}
                 {success && <p className="success-message">{success}</p>}
                 <form onSubmit={handleSubmit}>
                     <div className="form-input-group">
-                        <label htmlFor="discipline-name">Название дисциплины:</label>
-                        <input id="discipline-name" type="text" value={name} onChange={(e) => setName(e.target.value)} required />
+                        <label htmlFor="equipment-name">Название оборудования (Проектор, Компьютеры):</label>
+                        <input id="equipment-name" type="text" value={name} onChange={(e) => setName(e.target.value)} required />
                     </div>
-                    <button type="submit" className="admin-form-submit-button">Добавить дисциплину</button>
+                    <button type="submit" className="form-submit-button">Добавить оборудование</button>
                 </form>
             </div>
         </div>
     );
 }
-export default CreateDisciplinePage;
+export default CreateEquipmentPage;

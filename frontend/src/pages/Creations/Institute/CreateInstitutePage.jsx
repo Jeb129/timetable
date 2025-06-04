@@ -2,7 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import './Pages.css'; 
+import Navigation from '../../../components/navigation/navigation';
+import '../../Pages.css';
+import '../../../assets/form.css'
 
 function CreateInstitutePage() {
     const [name, setName] = useState('');
@@ -93,7 +95,7 @@ function CreateInstitutePage() {
     };
 
     return (
-        <div className="admin-form-page-container">
+        <div className="page-container">
             <Navigation links={[
                 ['/create-user', 'Создание пользователя'],
                 ['/admin/create-building', 'Создание корпуса'],
@@ -112,10 +114,10 @@ function CreateInstitutePage() {
                 ['/admin/create-educationform', 'Создание формы обучения'],
                 ['/admin/create-educationlevel', 'Создание уровня образования'],
             ]} />
-            <div className="admin-form-wrapper">
-                <div className="admin-form-header">
+            <div className="form-container">
+                <div className="form-header">
                 <h2>Создание нового института</h2>
-                <button onClick={handleGoBack} className="admin-form-back-button">
+                <button onClick={handleGoBack} className="form-back-button">
                         ← Назад 
                     </button>
                     </div>
@@ -159,7 +161,7 @@ function CreateInstitutePage() {
                         />
                         */}
                     </div>
-                    <button type="submit" className="admin-form-submit-button">Создать институт</button>
+                    <button type="submit" className="form-submit-button">Создать институт</button>
                 </form>
             </div>
         </div>

@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import './navigation.css';
 
 const Navigation = ({ links = [] }) => {
   const navigate = useNavigate();
