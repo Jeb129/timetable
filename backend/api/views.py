@@ -158,7 +158,7 @@ def list_objects(request, model_name):
     if not model_info:
         logger.error(f"Unknown model type for list: {model_name_lower}")
         return Response({"error": "Unknown model type"}, status=status.HTTP_400_BAD_REQUEST)
-
+    print('Нашел модель')
     model_class, serializer_class = model_info
     queryset = model_class.objects.all()
     logger.info(f"Initial queryset for {model_name_lower} count: {queryset.count()}")
