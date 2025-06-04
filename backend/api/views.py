@@ -289,7 +289,7 @@ def group_pairs(request, group_id):
     return Response(serializer.data)
 
 @api_view(['POST'])
-@permission_classes([IsAdminUser])2
+@permission_classes([IsAdminUser])
 def create_ScheduledLesson(request,lesson_id, timeslot_id):
     try:
         lesson = Lesson.objects.get(id=lesson_id)
